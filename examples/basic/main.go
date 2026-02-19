@@ -10,9 +10,9 @@ import (
 
 // Config is the application configuration.
 type Config struct {
-	Host    string    `yaml:"host"`
-	Port    int       `yaml:"port"`
-	DB      DBConfig  `yaml:"db"`
+	Host    string         `yaml:"host"`
+	Port    int            `yaml:"port"`
+	DB      DBConfig       `yaml:"db"`
 	Timeout types.Duration `yaml:"timeout"`
 }
 
@@ -24,7 +24,7 @@ type DBConfig struct {
 
 func main() {
 	cfg, err := goconfy.Load[Config](
-		goconfy.WithFile("config.yml"),
+		goconfy.WithFile("examples/basic/config.yml"),
 	)
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
