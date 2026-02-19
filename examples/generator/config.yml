@@ -1,0 +1,40 @@
+# Bind address
+# env: APP_HOST
+# example: localhost
+host: "{ENV:APP_HOST:0.0.0.0}"
+
+# HTTP port
+# env: APP_PORT
+port: "{ENV:APP_PORT:8080}"
+
+# Enable debug mode
+debug: false
+
+# Request timeout
+# env: APP_TIMEOUT
+timeout: "{ENV:APP_TIMEOUT:30s}"
+
+db:
+  # Database connection string
+  # env: DB_DSN
+  # required: true
+  dsn: "{ENV:DB_DSN:postgres://localhost:5432/mydb}"
+  # Database password
+  # env: DB_PASSWORD
+  # secret: true
+  password: "{ENV:DB_PASSWORD:}"
+  # Maximum open connections
+  # env: DB_MAX_CONN
+  max_conn: "{ENV:DB_MAX_CONN:25}"
+
+# Profile overrides
+profiles:
+  dev:
+    # host: "{ENV:APP_HOST:0.0.0.0}"
+    # port: "{ENV:APP_PORT:8080}"
+  staging:
+    # host: "{ENV:APP_HOST:0.0.0.0}"
+    # port: "{ENV:APP_PORT:8080}"
+  prod:
+    # host: "{ENV:APP_HOST:0.0.0.0}"
+    # port: "{ENV:APP_PORT:8080}"
