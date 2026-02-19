@@ -6,7 +6,7 @@ Only the latest version of goConfy is supported for security updates.
 
 ## Reporting a Vulnerability
 
-Please report security vulnerabilities to keksiclan@gmail.com.
+Please report security vulnerabilities to issues ig i dont have a standart do report these in the moment sry.
 
 ## Security Model Summary
 
