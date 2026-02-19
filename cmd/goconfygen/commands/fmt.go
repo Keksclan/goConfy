@@ -11,7 +11,10 @@ import (
 	"github.com/keksclan/goConfy/internal/yamlparse"
 )
 
-// RunFmt implements the "fmt" subcommand.
+// RunFmt implements the "fmt" subcommand. It reads a YAML config file,
+// optionally expands environment macros, and re-marshals the YAML with
+// consistent formatting. Accepts -in, -out, -expand, and -dotenv flags.
+// If -out is not specified, the input file is overwritten in place.
 func RunFmt(args []string) error {
 	fs := flag.NewFlagSet("fmt", flag.ContinueOnError)
 

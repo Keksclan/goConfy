@@ -15,7 +15,10 @@ import (
 	"github.com/keksclan/goConfy/internal/yamlparse"
 )
 
-// RunDump implements the "dump" subcommand.
+// RunDump implements the "dump" subcommand. It loads a YAML config file,
+// decodes it into the registered config type, and prints a redacted JSON
+// representation to stdout. Fields tagged with secret:"true" are replaced
+// with "[REDACTED]". Accepts -id, -in, -dotenv, and -profile flags.
 func RunDump(args []string) error {
 	fs := flag.NewFlagSet("dump", flag.ContinueOnError)
 

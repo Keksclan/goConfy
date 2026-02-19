@@ -8,12 +8,14 @@ Only the latest version of goConfy is supported for security updates.
 
 Please report security vulnerabilities to keksiclan@gmail.com.
 
-## Security Model
+## Security Model Summary
 
-- **No automatic env scanning**: goConfy does not automatically load all environment variables into your configuration.
-- **Explicit macros**: Only environment variables explicitly defined in YAML using the `{ENV:KEY:default}` syntax are expanded.
-- **Strict decoding**: YAML decoding is strict by default, rejecting unknown fields to prevent accidental configuration errors.
-- **Redaction**: Support for `secret:"true"` tags and manual redaction paths to prevent sensitive data from being logged or printed.
-- **Dotenv isolation**: The `.env` file loader does **not** call `os.Setenv`. Values are kept in an internal store and used only as a lookup source for macro expansion. This prevents accidental mutation of the global OS environment.
-- **Dotenv precedence**: By default, OS environment variables take precedence over `.env` values (`WithDotEnvOSPrecedence(true)`). This is the recommended production policy, ensuring that deployment-level environment variables always override file-based defaults.
-- **Recommended production policy**: Use `WithDotEnvOptional(false)` (default) in production to fail fast if the expected `.env` file is missing. Use OS precedence to ensure runtime environment always wins.
+- **No automatic env scanning**: only explicitly defined `{ENV:KEY:default}` macros are expanded
+- **Exact-match only**: no `${VAR}`, no inline expansion, no recursive resolution
+- **Strict decoding**: rejects unknown YAML fields by default
+- **Secret redaction**: `secret:"true"` tag + dot-path redaction for safe logging
+- **Dotenv isolation**: `.env` values never injected into `os.Environ()`
+- **Dotenv precedence**: OS env wins by default (`WithDotEnvOSPrecedence(true)`)
+- **Env key restrictions**: prefix filtering and explicit allowlists supported
+
+For the full security model with detailed explanations and recommended production policies, see [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md).

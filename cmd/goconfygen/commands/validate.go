@@ -15,7 +15,12 @@ import (
 	"github.com/keksclan/goConfy/internal/yamlparse"
 )
 
-// RunValidate implements the "validate" subcommand.
+// RunValidate implements the "validate" subcommand. It loads a YAML config
+// file, expands environment macros, applies profile overrides, and decodes
+// into the registered config type using strict mode. If the config type
+// implements Normalize() or Validate(), those hooks are called.
+// Exits with code 0 on success, 1 on validation errors.
+// Accepts -id, -in, -dotenv, -profile, -strict, and -print flags.
 func RunValidate(args []string) error {
 	fs := flag.NewFlagSet("validate", flag.ContinueOnError)
 

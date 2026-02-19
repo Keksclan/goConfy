@@ -10,7 +10,10 @@ import (
 	"github.com/keksclan/goConfy/gen/yamltemplate"
 )
 
-// RunInit implements the "init" subcommand.
+// RunInit implements the "init" subcommand. It generates a YAML config
+// template from a registered config type, emitting keys with default values,
+// environment macro placeholders, and descriptive comments derived from struct
+// tags. Accepts -id, -out, -profile, -dotenv, -force, and -mkdir flags.
 func RunInit(args []string) error {
 	fs := flag.NewFlagSet("init", flag.ContinueOnError)
 
