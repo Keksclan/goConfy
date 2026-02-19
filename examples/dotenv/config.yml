@@ -1,0 +1,8 @@
+app:
+  name: "{ENV:APP_NAME:todo-service}"
+  version_display: "{ENV:APP_VERSION_DISPLAY:true}"
+
+server:
+  grpc:
+    port: "{ENV:GRPC_PORT:50051}"
+    timeout: "{ENV:GRPC_TIMEOUT:3s}"

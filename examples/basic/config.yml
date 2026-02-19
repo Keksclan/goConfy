@@ -1,0 +1,6 @@
+host: localhost
+port: "{ENV:PORT:8080}"
+db:
+  dsn: "postgres://localhost:5432/mydb"
+  password: "{ENV:DB_PASSWORD:secret}"
+timeout: 30s
