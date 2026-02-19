@@ -16,6 +16,7 @@ It provides a complete configuration pipeline: YAML parsing → environment macr
 - **Validation hook**: `Validate()` called after normalization
 - **Secret redaction**: `secret:"true"` tag + dot-path redaction for safe logging
 - **Generator CLI** (`goconfygen`): generate YAML templates, validate, format, and dump configs
+- **Interactive TUI** (`goconfytui`): browse configs, preview, validate, format, and dump interactively
 
 ## Installation
 
@@ -391,6 +392,68 @@ Demonstrates the registry provider and goconfygen usage:
 go build ./cmd/goconfygen
 ```
 
+### examples/tui
+
+Sample config and .env for exploring the TUI:
+
+```bash
+go run ./cmd/goconfytui
+# Then open examples/tui/config.yml and examples/tui/.env
+# See examples/tui/README.md for a full walkthrough
+```
+
+## goconfytui (TUI)
+
+`goconfytui` is an interactive terminal UI for goConfy, providing the same workflows as the CLI in a keyboard-driven interface powered by [Charm](https://charm.sh/) (bubbletea + lipgloss + bubbles).
+
+### Install / Build
+
+```bash
+# Install globally
+go install github.com/keksclan/goConfy/cmd/goconfytui@latest
+
+# Or build locally
+go build -o goconfytui ./cmd/goconfytui
+```
+
+### Features
+
+- **Inspect config** — browse RAW YAML, EXPANDED, MERGED, and REDACTED JSON tabs
+- **Validate** — run the full pipeline and see VALID / INVALID with error details
+- **Format** — preview before/after and write with confirmation
+- **Dump** — view redacted JSON output
+- **Init** — generate config templates from registry providers
+- **Settings** — toggle strict mode, dotenv options, profile env var, redaction paths
+- **Profile handling** — see active profile, available profiles, and override inline
+- **Directory browser** — navigate and select files with Ctrl+B
+
+### Key Bindings
+
+| Key | Action |
+|-----|--------|
+| `q` / `esc` | Back / quit (from home) |
+| `↑` / `↓` | Navigate |
+| `enter` | Select / confirm |
+| `tab` | Switch tabs / fields |
+| `ctrl+s` | Save / write |
+| `r` | Reload from disk |
+| `v` | Validate |
+| `f` | Format |
+| `d` | Dump |
+| `i` | Init / template |
+| `?` | Toggle help |
+| `ctrl+b` | Open directory browser |
+| `ctrl+c` | Force quit |
+
+### Security
+
+- Secrets are **never** shown in plaintext.
+- YAML previews use best-effort dot-path redaction (configurable in Settings).
+- The REDACTED JSON tab always uses `secret:"true"` struct tags.
+- Default redacted paths: `redis.password`, `auth.opaque.client_secret`, `postgres.url`.
+
+See [examples/tui/README.md](examples/tui/README.md) for a step-by-step walkthrough.
+
 ## Documentation
 
 | Document | Description |
@@ -404,7 +467,8 @@ go build ./cmd/goconfygen
 ## Compatibility
 
 - **Go 1.26+** required
-- Only external dependency: `gopkg.in/yaml.v3`
+- Core dependency: `gopkg.in/yaml.v3`
+- TUI dependencies: `github.com/charmbracelet/bubbletea`, `lipgloss`, `bubbles`
 
 ## License
 

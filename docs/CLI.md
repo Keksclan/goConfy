@@ -26,6 +26,10 @@ Commands:
 
 Running `goconfygen` without arguments prints usage information.
 
+> **TUI alternative:** All of the above operations are also available interactively
+> via `goconfytui`. See the [TUI section in README](../README.md#goconfytui-tui) or
+> run `go run ./cmd/goconfytui`.
+
 ---
 
 ## Registry-Based Type Discovery

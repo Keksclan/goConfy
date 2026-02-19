@@ -256,6 +256,39 @@ Or set it explicitly:
 goconfy.WithProfile("prod")
 ```
 
+## 8. Using the TUI
+
+goConfy ships with an interactive TUI (`goconfytui`) that provides the same
+operations as the CLI in a keyboard-driven terminal interface.
+
+### Install
+
+```bash
+go install github.com/keksclan/goConfy/cmd/goconfytui@latest
+# or build locally
+go build ./cmd/goconfytui
+```
+
+### Quick Start
+
+```bash
+./goconfytui
+```
+
+1. Select **Open / Inspect config** from the menu.
+2. Type the path to your YAML file (e.g. `config.yml`).
+3. Optionally enter a `.env` file path.
+4. Press `enter` — the Inspect screen shows four tabs:
+   - **RAW YAML** — file contents (secrets redacted)
+   - **EXPANDED** — after macro expansion (secrets redacted)
+   - **MERGED** — after profile merge (secrets redacted)
+   - **REDACTED JSON** — typed config with `[REDACTED]` for secrets
+5. Press `tab` to cycle tabs, `esc` to go back.
+6. From the home menu use `3` to validate, `4` to format, `5` to dump, `6` for settings.
+7. Press `?` at any time for a help overlay.
+
+See [examples/tui/README.md](../examples/tui/README.md) for a full walkthrough with sample files.
+
 ## Troubleshooting
 
 ### "strict YAML decode: unknown field"

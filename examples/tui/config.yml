@@ -1,0 +1,31 @@
+host: localhost
+port: 8080
+timeout: 30s
+
+db:
+  dsn: "postgres://{ENV:DB_USER:admin}:{ENV:DB_PASS:secret}@localhost:5432/myapp"
+  password: "{ENV:DB_PASS:secret}"
+
+redis:
+  host: "{ENV:REDIS_HOST:localhost}"
+  port: 6379
+  password: "{ENV:REDIS_PASSWORD:}"
+
+auth:
+  opaque:
+    client_id: my-client
+    client_secret: "{ENV:OAUTH_SECRET:changeme}"
+
+profiles:
+  dev:
+    port: 9090
+    db:
+      dsn: "postgres://dev:dev@localhost:5432/myapp_dev"
+  staging:
+    port: 8081
+    redis:
+      host: "staging-redis.internal"
+  prod:
+    port: 443
+    redis:
+      host: "prod-redis.internal"
