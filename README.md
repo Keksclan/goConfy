@@ -176,6 +176,102 @@ type Config struct {
 ```
 YAML: `timeout: 5m`
 
+## goconfygen CLI
+
+`goconfygen` is a CLI tool that generates YAML config templates, validates configs, formats YAML, and dumps redacted config output — all driven by your typed Go config structs.
+
+### Installation
+
+```bash
+go install github.com/keksclan/goConfy/cmd/goconfygen@latest
+```
+
+### Registry Approach
+
+Because Go cannot import arbitrary packages at runtime, `goconfygen` uses a **registry** pattern. Your project registers its config type, then the CLI operates on it by ID.
+
+#### 1. Define your config struct with tags
+
+```go
+type Config struct {
+    Host    string `yaml:"host" default:"0.0.0.0" desc:"Bind address" env:"APP_HOST" example:"localhost"`
+    Port    int    `yaml:"port" default:"8080" desc:"HTTP port" env:"APP_PORT"`
+    Debug   bool   `yaml:"debug" default:"false" desc:"Enable debug mode"`
+    DB      DBConfig `yaml:"db"`
+}
+
+type DBConfig struct {
+    DSN      string `yaml:"dsn" default:"postgres://localhost/mydb" desc:"Connection string" env:"DB_DSN" required:"true"`
+    Password string `yaml:"password" secret:"true" env:"DB_PASSWORD" desc:"Database password"`
+}
+```
+
+#### 2. Register a provider
+
+```go
+package config
+
+import "github.com/keksclan/goConfy/gen/registry"
+
+type configProvider struct{}
+
+func (configProvider) ID() string { return "myservice" }
+func (configProvider) New() any   { return &Config{} }
+
+func init() {
+    registry.Register(configProvider{})
+}
+```
+
+#### 3. Use the CLI
+
+```bash
+# Generate YAML config template with defaults and comments
+goconfygen init -id myservice -out ./config.yml
+
+# Include profile skeleton and .env file
+goconfygen init -id myservice -out ./config.yml -profile dev -dotenv -force
+
+# Validate a config file
+goconfygen validate -id myservice -in ./config.yml
+
+# Format/canonicalize YAML
+goconfygen fmt -in ./config.yml
+
+# Dump redacted config as JSON
+goconfygen dump -id myservice -in ./config.yml
+```
+
+### Commands
+
+| Command    | Purpose                                              |
+|------------|------------------------------------------------------|
+| `init`     | Generate YAML template from registered config type   |
+| `validate` | Validate YAML by decoding into typed struct          |
+| `fmt`      | Canonicalize YAML formatting                         |
+| `dump`     | Show resulting config as redacted JSON               |
+
+### Struct Tags Reference
+
+| Tag        | Example               | Purpose                                   |
+|------------|-----------------------|-------------------------------------------|
+| `yaml`     | `yaml:"host"`        | YAML key name                             |
+| `default`  | `default:"8080"`     | Default value for template generation     |
+| `desc`     | `desc:"HTTP port"`   | Description emitted as YAML comment       |
+| `env`      | `env:"APP_PORT"`     | Environment variable source               |
+| `secret`   | `secret:"true"`      | Mark as secret (never output in clear)    |
+| `required` | `required:"true"`    | Mark as required (comment + hint)         |
+| `example`  | `example:"localhost"`| Example value shown in comment            |
+| `sep`      | `sep:","`            | Separator for slice env parsing           |
+
+### Generated Output
+
+Fields with `env` tags produce macro values: `"{ENV:APP_PORT:8080}"`.
+Secret fields never include real defaults: `"{ENV:DB_PASSWORD:}"`.
+Comments include `desc`, `env`, `required`, `secret`, and `example` info.
+
+See the full example in [`examples/generator/`](examples/generator/).
+
 ## License
 
 MIT License
