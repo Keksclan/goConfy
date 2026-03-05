@@ -1,0 +1,36 @@
+# The application name
+app: "myapp"
+
+# The port to listen on
+# env: PORT
+port: "{ENV:PORT:8080}"
+
+# Enable debug mode
+debug: false
+
+# Secret API key
+# env: API_KEY
+# secret: true
+api_key: "{ENV:API_KEY:}"
+
+# List of servers
+# example: s1,s2
+servers:
+  - s1
+  - s2
+
+database:
+  host: "localhost"
+  user: "admin"
+
+# Profile overrides
+profiles:
+  dev:
+    # app: "myapp"
+    # port: "{ENV:PORT:8080}"
+  staging:
+    # app: "myapp"
+    # port: "{ENV:PORT:8080}"
+  prod:
+    # app: "myapp"
+    # port: "{ENV:PORT:8080}"

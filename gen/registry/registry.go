@@ -4,7 +4,10 @@
 // which the CLI then uses to generate YAML templates and validate configs.
 package registry
 
-import "sync"
+import (
+	"slices"
+	"sync"
+)
 
 // Provider describes a config type that can be used by the generator.
 type Provider interface {
@@ -35,7 +38,7 @@ func Get(id string) (Provider, bool) {
 	return p, ok
 }
 
-// List returns all registered provider IDs in no particular order.
+// List returns all registered provider IDs in sorted order.
 func List() []string {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -43,5 +46,6 @@ func List() []string {
 	for id := range providers {
 		ids = append(ids, id)
 	}
+	slices.Sort(ids)
 	return ids
 }

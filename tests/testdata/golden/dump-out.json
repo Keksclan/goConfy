@@ -1,0 +1,11 @@
+{
+  "api_key": "[REDACTED]",
+  "app": "myapp",
+  "database": {
+    "host": "",
+    "user": ""
+  },
+  "debug": false,
+  "port": 9000,
+  "servers": []
+}

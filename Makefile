@@ -27,6 +27,10 @@ fmt-check:
 vulncheck:
 	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
+## update-golden: Update golden files for tests
+update-golden:
+	go test ./tests -run TestGolden -update
+
 ## help: Show this help message
 help:
 	@echo "Usage: make [target]"
