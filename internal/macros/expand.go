@@ -45,9 +45,10 @@ func expandNode(node *yaml.Node, opts ExpandOptions, path string) error {
 			}
 		}
 	case yaml.MappingNode:
-		for i := 0; i < len(node.Content)-1; i += 2 {
-			keyNode := node.Content[i]
-			valNode := node.Content[i+1]
+		for i := range len(node.Content) / 2 {
+			idx := i * 2
+			keyNode := node.Content[idx]
+			valNode := node.Content[idx+1]
 			var newPath string
 			if path == "" {
 				newPath = keyNode.Value

@@ -60,7 +60,7 @@ func checkSchema(t *testing.T) {
 	}
 
 	rt := reflect.TypeFor[Config]()
-	for i := 0; i < rt.NumField(); i++ {
+	for i := range rt.NumField() {
 		field := rt.Field(i)
 		yamlTag := field.Tag.Get("yaml")
 		if yamlTag == "-" || yamlTag == "" {
@@ -89,7 +89,7 @@ func checkFields(t *testing.T, rt reflect.Type, node *yaml.Node, path string) {
 		mapping = node
 	}
 
-	for i := 0; i < rt.NumField(); i++ {
+	for i := range rt.NumField() {
 		field := rt.Field(i)
 		yamlTag := field.Tag.Get("yaml")
 		if yamlTag == "-" || yamlTag == "" {
@@ -217,7 +217,7 @@ func collectEnvTags(rt reflect.Type, tags map[string]struct{}) {
 		return
 	}
 
-	for i := 0; i < rt.NumField(); i++ {
+	for i := range rt.NumField() {
 		field := rt.Field(i)
 		if tag := field.Tag.Get("env"); tag != "" {
 			tags[tag] = struct{}{}

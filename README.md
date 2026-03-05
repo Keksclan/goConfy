@@ -1,5 +1,11 @@
 # goConfy
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/keksclan/goConfy@v0.1.0-beta.svg)](https://pkg.go.dev/github.com/keksclan/goConfy@v0.1.0-beta)
+[![Go Report Card](https://goreportcard.com/badge/github.com/keksclan/goConfy)](https://goreportcard.com/report/github.com/keksclan/goConfy)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/keksclan/goConfy)](https://github.com/keksclan/goConfy/blob/main/go.mod)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/keksclan/goConfy/actions/workflows/ci.yml/badge.svg)](https://github.com/keksclan/goConfy/actions/workflows/ci.yml)
+
 goConfy is a strongly typed, strict, and secure YAML configuration loader for Go.
 
 It provides a complete configuration pipeline: YAML parsing → environment macro expansion → dotenv loading → profile-based overrides → strict decoding → normalization → validation → secret redaction.

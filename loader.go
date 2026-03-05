@@ -31,8 +31,9 @@ func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path str
 			collectBaseEntries[T](child, report, path, opts)
 		}
 	case yaml.MappingNode:
-		for i := 0; i < len(node.Content)-1; i += 2 {
-			key := node.Content[i].Value
+		for i := range len(node.Content) / 2 {
+			idx := i * 2
+			key := node.Content[idx].Value
 			if key == "profiles" && path == "" {
 				continue
 			}
@@ -40,7 +41,7 @@ func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path str
 			if path != "" {
 				newPath = path + "." + key
 			}
-			collectBaseEntries[T](node.Content[i+1], report, newPath, opts)
+			collectBaseEntries[T](node.Content[idx+1], report, newPath, opts)
 		}
 	case yaml.SequenceNode:
 		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
@@ -70,9 +71,10 @@ func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profi
 	}
 
 	var profilesNode *yaml.Node
-	for i := 0; i < len(mapping.Content)-1; i += 2 {
-		if mapping.Content[i].Value == "profiles" {
-			profilesNode = mapping.Content[i+1]
+	for i := range len(mapping.Content) / 2 {
+		idx := i * 2
+		if mapping.Content[idx].Value == "profiles" {
+			profilesNode = mapping.Content[idx+1]
 			break
 		}
 	}
@@ -82,9 +84,10 @@ func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profi
 	}
 
 	var overrideNode *yaml.Node
-	for i := 0; i < len(profilesNode.Content)-1; i += 2 {
-		if profilesNode.Content[i].Value == profileName {
-			overrideNode = profilesNode.Content[i+1]
+	for i := range len(profilesNode.Content) / 2 {
+		idx := i * 2
+		if profilesNode.Content[idx].Value == profileName {
+			overrideNode = profilesNode.Content[idx+1]
 			break
 		}
 	}
@@ -101,9 +104,10 @@ func collectOverrides[T any](node *yaml.Node, report *explain.Report, path strin
 
 	switch node.Kind {
 	case yaml.MappingNode:
-		for i := 0; i < len(node.Content)-1; i += 2 {
-			key := node.Content[i].Value
-			valNode := node.Content[i+1]
+		for i := range len(node.Content) / 2 {
+			idx := i * 2
+			key := node.Content[idx].Value
+			valNode := node.Content[idx+1]
 			newPath := key
 			if path != "" {
 				newPath = path + "." + key
@@ -125,6 +129,27 @@ func collectOverrides[T any](node *yaml.Node, report *explain.Report, path strin
 
 // Load reads, parses, expands, decodes, normalizes, and validates a YAML
 // configuration into a typed struct T.
+//
+// Load is the primary entry point for goConfy. It follows a multi-stage pipeline
+// to ensure that the final configuration is complete, correct, and secure.
+//
+// The configuration pipeline follows these steps:
+//
+//  1. Read YAML input from file or bytes (see [WithFile], [WithBytes]).
+//  2. Parse YAML into an intermediate tree representation (using yaml.v3).
+//  3. (Optional) Initialize a reporter if configured (see [WithExplainReporter]).
+//  4. Build an environment lookup chain, potentially including .env files (see [WithDotEnvEnabled]).
+//  5. Expand environment macros like {ENV:KEY:default} and {FILE:/path:default}.
+//  6. (Optional) Apply profile-based overrides from the "profiles" YAML section (see [WithEnableProfiles]).
+//  7. Decode the YAML tree into the target struct T (strict mode by default, see [WithStrictYAML]).
+//  8. Call the Normalize() method if the struct implements the [Normalizable] interface.
+//  9. Call the Validate() method if the struct implements the [Validatable] interface.
+//
+// If any step fails, Load returns the zero value of T and a [FieldError] (or a [MultiError]).
+// The returned error contains detailed context about where and why the load failed,
+// including the pipeline [Layer] (e.g., "base", "dotenv", "profile", "validation").
+//
+// For more details on the individual stages, see the package-level documentation in doc.go.
 func Load[T any](opts ...Option) (T, error) {
 	var zero T
 
@@ -282,6 +307,8 @@ func Load[T any](opts ...Option) (T, error) {
 }
 
 // MustLoad is like Load but panics on error.
+// It is intended for use in simple applications or entry points (like main)
+// where a configuration failure is fatal and cannot be handled gracefully.
 func MustLoad[T any](opts ...Option) T {
 	cfg, err := Load[T](opts...)
 	if err != nil {

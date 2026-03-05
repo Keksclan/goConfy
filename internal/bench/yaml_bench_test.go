@@ -17,7 +17,7 @@ func BenchmarkParseSmallV3(b *testing.B) {
 		b.Fatalf("failed to read small config file: %v", err)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := yamlparse.ParseBytes(data)
 		if err != nil {
 			b.Fatalf("yaml parse error: %v", err)
@@ -31,7 +31,7 @@ func BenchmarkParseMediumV3(b *testing.B) {
 		b.Fatalf("failed to read medium config file: %v", err)
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := yamlparse.ParseBytes(data)
 		if err != nil {
 			b.Fatalf("yaml parse error: %v", err)
@@ -41,12 +41,12 @@ func BenchmarkParseMediumV3(b *testing.B) {
 
 func BenchmarkParseLargeV3(b *testing.B) {
 	var buf bytes.Buffer
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		fmt.Fprintf(&buf, "item_%d:\n  key1: value1\n  key2: value2\n  nested:\n    field: {ENV:ITEM_%d_NESTED:default}\n", i, i)
 	}
 	data := buf.Bytes()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := yamlparse.ParseBytes(data)
 		if err != nil {
 			b.Fatalf("yaml parse error: %v", err)
@@ -87,7 +87,7 @@ func BenchmarkStrictDecodingV3(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		var cfg Config
 		dec := yaml.NewDecoder(bytes.NewReader(data))
 		dec.KnownFields(true)

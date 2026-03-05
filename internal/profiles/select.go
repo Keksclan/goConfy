@@ -39,9 +39,10 @@ func ApplyProfile(root *yaml.Node, profileName string) error {
 
 	// Find "profiles" key
 	profileIdx := -1
-	for i := 0; i < len(mapping.Content)-1; i += 2 {
-		if mapping.Content[i].Value == "profiles" {
-			profileIdx = i
+	for i := range len(mapping.Content) / 2 {
+		idx := i * 2
+		if mapping.Content[idx].Value == "profiles" {
+			profileIdx = idx
 			break
 		}
 	}
@@ -57,9 +58,10 @@ func ApplyProfile(root *yaml.Node, profileName string) error {
 
 	// Find the selected profile
 	var overrideNode *yaml.Node
-	for i := 0; i < len(profilesNode.Content)-1; i += 2 {
-		if profilesNode.Content[i].Value == profileName {
-			overrideNode = profilesNode.Content[i+1]
+	for i := range len(profilesNode.Content) / 2 {
+		idx := i * 2
+		if profilesNode.Content[idx].Value == profileName {
+			overrideNode = profilesNode.Content[idx+1]
 			break
 		}
 	}
@@ -88,9 +90,10 @@ func removeProfilesKey(root *yaml.Node) error {
 		return nil
 	}
 
-	for i := 0; i < len(mapping.Content)-1; i += 2 {
-		if mapping.Content[i].Value == "profiles" {
-			mapping.Content = append(mapping.Content[:i], mapping.Content[i+2:]...)
+	for i := range len(mapping.Content) / 2 {
+		idx := i * 2
+		if mapping.Content[idx].Value == "profiles" {
+			mapping.Content = append(mapping.Content[:idx], mapping.Content[idx+2:]...)
 			return nil
 		}
 	}

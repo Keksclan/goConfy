@@ -10,21 +10,23 @@ func DeepMerge(target, override *yaml.Node) {
 		return
 	}
 
-	for i := 0; i < len(override.Content)-1; i += 2 {
-		overrideKey := override.Content[i]
-		overrideVal := override.Content[i+1]
+	for i := range len(override.Content) / 2 {
+		idx := i * 2
+		overrideKey := override.Content[idx]
+		overrideVal := override.Content[idx+1]
 
 		found := false
-		for j := 0; j < len(target.Content)-1; j += 2 {
-			targetKey := target.Content[j]
-			targetVal := target.Content[j+1]
+		for j := range len(target.Content) / 2 {
+			jdx := j * 2
+			targetKey := target.Content[jdx]
+			targetVal := target.Content[jdx+1]
 
 			if targetKey.Value == overrideKey.Value {
 				found = true
 				if targetVal.Kind == yaml.MappingNode && overrideVal.Kind == yaml.MappingNode {
 					DeepMerge(targetVal, overrideVal)
 				} else {
-					target.Content[j+1] = overrideVal
+					target.Content[jdx+1] = overrideVal
 				}
 				break
 			}

@@ -40,7 +40,7 @@ func IsSecret(t reflect.Type, path string, opts Options) bool {
 	curr := t
 	for i, part := range parts {
 		found := false
-		for j := 0; j < curr.NumField(); j++ {
+		for j := range curr.NumField() {
 			field := curr.Field(j)
 			name := fieldName(field)
 			if name == part {
