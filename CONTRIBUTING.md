@@ -63,6 +63,16 @@ go build ./examples/dotenv
 (cd tools && go build ./examples/generator)
 ```
 
+## Repository Hygiene
+
+To keep the repository clean and secure, please follow these rules:
+
+- **No Binaries**: Never commit compiled binaries, executables, or build artifacts (e.g., `*.exe`, `*.so`, `*.dylib`, `*.test`, `*.out`).
+- **Source Only**: The repository should only contain source code, documentation, and configuration files.
+- **Build Locally**: Generate builds and test binaries locally or let the CI handle them.
+- **Clean Commits**: Ensure your `.gitignore` is up to date and that no temporary files or IDE-specific settings are committed.
+- **Tools**: If you need to build tools in the `tools/` directory, use `go build` or `go install`. Do not commit the resulting binaries.
+
 ## Code Style
 
 - Follow standard Go idioms and conventions.

@@ -1,0 +1,13 @@
+server:
+  host: localhost
+  port: "{ENV:PORT:8080}"
+db:
+  password: "{ENV:DB_PASSWORD:}"
+  url: "{FILE:testdata/db_url.txt:default-url}"
+  timeout: 30s
+secret_key: "{ENV:SECRET_KEY:default-secret}"
+profiles:
+  dev:
+    server:
+      port: 9090
+    debug: true

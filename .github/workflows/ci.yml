@@ -7,75 +7,43 @@ on:
     branches: [ main, master ]
 
 jobs:
-  core:
-    name: Core (runtime-only)
+  verify:
+    name: Full Verification (Core + Tools)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Binary Guard
+        run: |
+          echo "Checking for committed binaries..."
+          # Check for common binary extensions
+          BINARIES=$(find . -type f \( -name "*.exe" -o -name "*.so" -o -name "*.dll" -o -name "*.dylib" -o -name "*.test" -o -name "*.out" -o -name "*.bin" \) -not -path "./.git/*")
+          if [ ! -z "$BINARIES" ]; then
+            echo "Error: Binary files found in repository:"
+            echo "$BINARIES"
+            exit 1
+          fi
+
+          # Check for executable files that are not scripts or source code
+          # On Linux, -executable matches files with any execute bit set
+          EXECUTABLES=$(find . -type f -executable -not -path "./.git/*" -not -name "*.sh" -not -name "*.go" -not -name "Makefile" -not -name "*.py")
+          if [ ! -z "$EXECUTABLES" ]; then
+             echo "Error: Executable files found in repository (should be source only):"
+             echo "$EXECUTABLES"
+             exit 1
+          fi
+          echo "No binaries found. Clean repo."
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.26'
           cache: true
-          cache-dependency-path: go.sum
 
-      - name: Run gofmt check
+      - name: Install golangci-lint
         run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            echo "Following files are not formatted:"
-            gofmt -l .
-            exit 1
-          fi
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
 
-      - name: Run tests
-        run: go test -v ./...
-
-      - name: Run tests with race detector
-        run: go test -race -v ./...
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          args: --timeout=5m
-
-      - name: Run govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-
-  tools:
-    name: Tools module
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: tools
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26'
-          cache: true
-          cache-dependency-path: tools/go.sum
-
-      - name: Run gofmt check (tools)
-        run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            echo "Following files are not formatted:"
-            gofmt -l .
-            exit 1
-          fi
-
-      - name: Run tools tests
-        run: go test -v ./...
-
-      - name: Run tools tests with race detector
-        run: go test -race -v ./...
-
-      - name: Build tool binaries
-        run: |
-          go build ./cmd/goconfygen
-          go build ./cmd/goconfytui
+      - name: Run Verification (make verify)
+        run: make verify

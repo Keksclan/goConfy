@@ -9,15 +9,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/keksclan/goConfy/tools/generator/registry"
-	"github.com/keksclan/goConfy/tools/generator/yamltemplate"
 	"github.com/keksclan/goConfy/internal/decode"
 	"github.com/keksclan/goConfy/internal/dotenv"
 	"github.com/keksclan/goConfy/internal/envmacro"
 	"github.com/keksclan/goConfy/internal/profiles"
 	"github.com/keksclan/goConfy/internal/redact"
-	"github.com/keksclan/goConfy/tools/internal/tools/tui/state"
 	"github.com/keksclan/goConfy/internal/yamlparse"
+	"github.com/keksclan/goConfy/tools/generator/registry"
+	"github.com/keksclan/goConfy/tools/generator/yamltemplate"
+	"github.com/keksclan/goConfy/tools/internal/tools/tui/state"
 	"gopkg.in/yaml.v3"
 )
 

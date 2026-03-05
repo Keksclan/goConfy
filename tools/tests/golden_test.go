@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/keksclan/goConfy/tools/internal/tools/generator/commands"
 	"github.com/keksclan/goConfy/tools/generator/registry"
+	"github.com/keksclan/goConfy/tools/internal/tools/generator/commands"
 )
 
 var updateGolden = flag.Bool("update", false, "update golden files")

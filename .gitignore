@@ -1,15 +1,27 @@
 # Binaries
+bin/
+build/
+dist/
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+tools/goconfygen
+tools/goconfytui
 
 # Test binary
 *.test
 
 # Output of go coverage
 *.out
+coverage.out
+
+# Logs
+*.log
+
+# Temp files
+tmp/
 
 # Go workspace
 go.work

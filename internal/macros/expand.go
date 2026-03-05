@@ -48,7 +48,7 @@ func expandNode(node *yaml.Node, opts ExpandOptions, path string) error {
 		for i := 0; i < len(node.Content)-1; i += 2 {
 			keyNode := node.Content[i]
 			valNode := node.Content[i+1]
-			newPath := path
+			var newPath string
 			if path == "" {
 				newPath = keyNode.Value
 			} else {

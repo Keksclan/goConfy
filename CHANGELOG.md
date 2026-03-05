@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Full-Check & Release-Readiness**: Central `make verify` umbrella target for fmt, lint, tests, race detector, and vulncheck.
+- **Integration Test Suite**: New black-box integration tests in `tests/integration` covering the full pipeline (Load -> Merge -> Expand -> Normalize -> Validate -> Redact -> Explain).
+- **MultiError Support**: Validation errors are now aggregated into a `MultiError` for better feedback.
+- **Enhanced Error Reporting**: `FieldError` now includes `Layer`, `Path`, `Line`, and `Column` information where applicable.
+- **Deterministic Generator**: Golden tests in `tools/tests` ensure deterministic output for `goconfygen`.
+- **Release Checklist**: Added `docs/RELEASE_CHECKLIST.md` for standardized releases.
+
+### Changed
+- **Repository Hardening**: Removed committed binaries from `tools/`, updated `.gitignore` with standard Go rules, and added a CI guard to prevent future binary commits.
+- **Tool Splitting**: Tools moved to a separate Go module (`tools/`) to keep core dependencies minimal.
+- **Dotenv Security**: Loading `.env` files no longer mutates the global `os` environment, respecting the Security Model.
+- **Macro Restrictions**: Macros are now only expanded when the scalar is an exact match (no partial interpolation), preventing unintended side effects.
+
+### Fixed
+- **Macro Redaction**: Secrets expanded via macros are now correctly redacted in `DumpRedactedJSON` and the Explain report.
+
 ## [0.2.0] - 2026-02-19
 
 ### Added

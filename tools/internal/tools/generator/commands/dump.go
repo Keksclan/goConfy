@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/keksclan/goConfy/tools/generator/registry"
 	"github.com/keksclan/goConfy/internal/decode"
 	"github.com/keksclan/goConfy/internal/dotenv"
 	"github.com/keksclan/goConfy/internal/envmacro"
 	"github.com/keksclan/goConfy/internal/profiles"
 	"github.com/keksclan/goConfy/internal/redact"
 	"github.com/keksclan/goConfy/internal/yamlparse"
+	"github.com/keksclan/goConfy/tools/generator/registry"
 )
 
 // RunDump implements the "dump" subcommand. It loads a YAML config file,

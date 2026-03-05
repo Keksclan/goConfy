@@ -86,7 +86,9 @@ port: "{FILE:MISSING:3000}"
 func TestExplainWithConventionAndFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	secretFile := filepath.Join(tmpDir, "secret.txt")
-	os.WriteFile(secretFile, []byte("file-val"), 0600)
+	if err := os.WriteFile(secretFile, []byte("file-val"), 0600); err != nil {
+		t.Fatal(err)
+	}
 
 	yaml := []byte(strings.ReplaceAll(`
 db_password: "{FILE:PATH}"

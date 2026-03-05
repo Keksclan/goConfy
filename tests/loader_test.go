@@ -160,6 +160,6 @@ func TestMultiError(t *testing.T) {
 	target := fmt.Errorf("err1")
 	_ = target
 	if !errors.Is(me, me.Errors[0]) {
-		// errors.Is with Unwrap()[]error works in Go 1.20+
+		t.Error("errors.Is failed to find wrapped error in MultiError")
 	}
 }
