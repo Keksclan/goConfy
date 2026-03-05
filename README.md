@@ -381,7 +381,7 @@ Sample config and .env for exploring the TUI:
 
 ## Compatibility
 
-- **Go 1.26+** required
+- **Go 1.22+** required
 - Core dependency: `gopkg.in/yaml.v3`
 - Tool dependencies (only in `tools` module): `bubbletea`, `lipgloss`, `bubbles`
 

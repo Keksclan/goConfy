@@ -4,7 +4,7 @@ This tutorial walks you through using goConfy from scratch: loading configs, usi
 
 ## Prerequisites
 
-- **Go 1.26+** installed
+- **Go 1.22+** installed
 - A terminal (bash, PowerShell, or similar)
 
 ## 1. Clone the Repository
