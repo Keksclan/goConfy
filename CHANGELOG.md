@@ -6,12 +6,6 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - **YAML Benchmarks**: Added `internal/bench/yaml_bench_test.go` to monitor YAML parsing and decoding performance.
-
-### Changed
-- **Minimum Go Version**: Lowered minimum Go version from 1.26 to 1.22.
-- **YAML Parser Review**: Evaluated `github.com/goccy/go-yaml` for performance. Decided to stay with `gopkg.in/yaml.v3` to preserve strict `yaml.Node` AST compatibility (line/column info, macro expansion, and profile merging logic).
-
-### Added
 - **Full-Check & Release-Readiness**: Central `make verify` umbrella target for fmt, tests, race detector, and vulncheck.
 - **Integration Test Suite**: New black-box integration tests in `tests/integration` covering the full pipeline (Load -> Merge -> Expand -> Normalize -> Validate -> Redact -> Explain).
 - **MultiError Support**: Validation errors are now aggregated into a `MultiError` for better feedback.
@@ -20,6 +14,8 @@ All notable changes to this project will be documented in this file.
 - **Release Checklist**: Added `docs/RELEASE_CHECKLIST.md` for standardized releases.
 
 ### Changed
+- **Minimum Go Version**: Lowered minimum Go version from 1.26 to 1.22.
+- **YAML Parser Review**: Evaluated `github.com/goccy/go-yaml` for performance. Decided to stay with `gopkg.in/yaml.v3` to preserve strict `yaml.Node` AST compatibility (line/column info, macro expansion, and profile merging logic).
 - **Repository Hardening**: Removed committed binaries from `tools/`, updated `.gitignore` with standard Go rules, and added a CI guard to prevent future binary commits.
 - **Tool Splitting**: Tools moved to a separate Go module (`tools/`) to keep core dependencies minimal.
 - **Dotenv Security**: Loading `.env` files no longer mutates the global `os` environment, respecting the Security Model.
