@@ -122,29 +122,35 @@ Host: localhost, Port: 8080
 
 ## Macros
 
-goConfy uses exact-match environment macros:
+goConfy uses exact-match environment and file macros:
 
 ```
-{ENV:KEY}          → look up KEY, empty string if missing
-{ENV:KEY:default}  → look up KEY, use "default" if missing
+{ENV:KEY}               → look up environment variable KEY, error if missing
+{ENV:KEY:default}       → look up environment variable KEY, use "default" if missing
+{FILE:/path/to/file}    → read entire file content (trimmed)
+{FILE:/path:default}    → read file content, use "default" if file missing or unreadable
 ```
 
 ### Rules
 
 - The macro must be the **entire** YAML value — no inline macros
-- Key names must be uppercase + digits + underscores: `[A-Z0-9_]+`
+- **Environment Macros**: Key names must be uppercase + digits + underscores: `[A-Z0-9_]+`
+- **File Macros**: The path is read directly from disk; content is trimmed of leading/trailing whitespace
 - No recursive expansion — the resolved value is never re-scanned
-- No shell-style `${VAR}` or `$(cmd)` — by design (see [Security Model](docs/SECURITY_MODEL.md))
+- **Security**: No shell-style `${VAR}` or `$(cmd)` — by design (see [Security Model](docs/SECURITY_MODEL.md)). All lookups use direct syscalls (`os.Getenv` or `os.ReadFile`), ensuring no shell injection is possible.
 
 ### Examples
 
 ```yaml
 # ✅ Correct — entire value is a macro
 port: "{ENV:PORT:8080}"
-host: "{ENV:HOST:localhost}"
+db_url: "{FILE:/run/secrets/db_url}"
+fallback_cert: "{FILE:/etc/ssl/cert.pem:NONE}"
 
-# ✅ No default — empty string if HOST is not set
-host: "{ENV:HOST}"
+# ✅ Missing values
+# For ENV: error if missing and no default
+# For FILE: error if missing/unreadable and no default
+host: "{ENV:HOST:localhost}"
 
 # ❌ Will NOT expand — macro is embedded in a string
 url: "http://{ENV:HOST}:8080"
