@@ -93,11 +93,29 @@ host: "{ENV:ALLOWED_KEY:default}"
 		Lookup:      func(string) (string, bool) { return "", false },
 		AllowedKeys: []string{"OTHER_KEY"},
 	})
-	if err == nil {
-		t.Fatal("expected error for disallowed key")
+	if err != nil {
+		t.Fatalf("unexpected error for disallowed key with default: %v", err)
 	}
 
-	if ife, ok := err.(interface {
+	values := extractScalars(node)
+	if values["host"] != "default" {
+		t.Errorf("expected default, got %q", values["host"])
+	}
+
+	// Case: disallowed key without default
+	input2 := `
+host: "{ENV:DISALLOWED_KEY}"
+`
+	node2 := parseYAML(t, input2)
+	err2 := envmacro.ExpandNode(node2, envmacro.ExpandOptions{
+		Lookup:      func(string) (string, bool) { return "should-not-be-reached", true },
+		AllowedKeys: []string{"OTHER_KEY"},
+	})
+	if err2 == nil {
+		t.Fatal("expected error for disallowed key without default")
+	}
+
+	if ife, ok := err2.(interface {
 		GetPath() string
 		GetLine() int
 	}); ok {
@@ -108,7 +126,7 @@ host: "{ENV:ALLOWED_KEY:default}"
 			t.Errorf("expected line 2, got %d", ife.GetLine())
 		}
 	} else {
-		t.Errorf("expected error to provide Path and Line, got %T: %v", err, err)
+		t.Errorf("expected error to provide Path and Line, got %T: %v", err2, err2)
 	}
 }
 

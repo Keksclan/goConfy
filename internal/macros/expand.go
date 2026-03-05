@@ -119,6 +119,15 @@ func expandScalar(node *yaml.Node, opts ExpandOptions, path string) error {
 		hasDefault := colons >= 2
 
 		if len(opts.AllowedKeys) > 0 && !slices.Contains(opts.AllowedKeys, key) {
+			if hasDefault {
+				node.Value = defaultVal
+				node.Tag = ""
+				node.Style = 0
+				if opts.OnExpand != nil {
+					opts.OnExpand(path, key, defaultVal, "default")
+				}
+				return nil
+			}
 			return &FieldError{
 				Path:    path,
 				Line:    node.Line,
