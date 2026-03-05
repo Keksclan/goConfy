@@ -19,6 +19,8 @@ type fieldInfo struct {
 	Desc string
 	// Example is the example value from `example:"..."` tag.
 	Example string
+	// Options is the list of allowed values from `options:"..."` tag.
+	Options string
 	// Required indicates `required:"true"`.
 	Required bool
 	// Secret indicates `secret:"true"`.
@@ -77,6 +79,7 @@ func extractFields(t reflect.Type) []fieldInfo {
 		}
 		info.Desc = f.Tag.Get("desc")
 		info.Example = f.Tag.Get("example")
+		info.Options = f.Tag.Get("options")
 		info.Required = f.Tag.Get("required") == "true"
 		info.Secret = f.Tag.Get("secret") == "true"
 		info.Env = f.Tag.Get("env")

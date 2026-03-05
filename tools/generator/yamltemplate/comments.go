@@ -19,6 +19,9 @@ func buildComment(fi fieldInfo) string {
 	if fi.Secret {
 		lines = append(lines, "secret: true")
 	}
+	if fi.Options != "" {
+		lines = append(lines, "allowed values: "+fi.Options)
+	}
 	if fi.Example != "" {
 		lines = append(lines, "example: "+fi.Example)
 	}
