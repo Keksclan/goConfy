@@ -38,7 +38,7 @@ vulncheck:
 
 ## update-golden: Update golden files for tests
 update-golden:
-	go test ./tests -run TestGolden -update
+	cd tools && go test ./tests -run TestGolden -update
 
 ## help: Show this help message
 help:
