@@ -24,6 +24,15 @@ It provides a complete configuration pipeline: YAML parsing → environment macr
 go get github.com/keksclan/goConfy@latest
 ```
 
+## Versioning & Compatibility
+
+Wir folgen [SemVer](https://semver.org/).
+
+- **v0.x.x**: Experimentelle Phase. Breaking Changes an der API sind jederzeit möglich.
+- **v1.x.x**: Stabile API. Wir garantieren Rückwärtskompatibilität innerhalb einer Major-Version.
+
+Weitere Informationen zum Release-Prozess finden Sie in [RELEASE.md](RELEASE.md).
+
 ## Quickstart
 
 ### 1. Define a Config Struct
