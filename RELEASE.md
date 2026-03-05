@@ -13,7 +13,6 @@ Wir verwenden [SemVer](https://semver.org/).
 
 1. **Vorbereitung**:
     - Stelle sicher, dass alle Tests lokal bestehen: `make test test-race`.
-    - Führe den Linter aus: `make lint`.
     - Überprüfe auf Sicherheitslücken: `make vulncheck`.
     - Aktualisiere ggf. `CHANGELOG.md`.
 

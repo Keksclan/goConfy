@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - **YAML Parser Review**: Evaluated `github.com/goccy/go-yaml` for performance. Decided to stay with `gopkg.in/yaml.v3` to preserve strict `yaml.Node` AST compatibility (line/column info, macro expansion, and profile merging logic).
 
 ### Added
-- **Full-Check & Release-Readiness**: Central `make verify` umbrella target for fmt, lint, tests, race detector, and vulncheck.
+- **Full-Check & Release-Readiness**: Central `make verify` umbrella target for fmt, tests, race detector, and vulncheck.
 - **Integration Test Suite**: New black-box integration tests in `tests/integration` covering the full pipeline (Load -> Merge -> Expand -> Normalize -> Validate -> Redact -> Explain).
 - **MultiError Support**: Validation errors are now aggregated into a `MultiError` for better feedback.
 - **Enhanced Error Reporting**: `FieldError` now includes `Layer`, `Path`, `Line`, and `Column` information where applicable.

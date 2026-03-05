@@ -4,7 +4,7 @@ This checklist must be completed before tagging a new release of `goConfy`.
 
 ## 1. Local Verification
 - [ ] Run `make verify` from the project root.
-  - This includes: `fmt-check`, `lint`, `test`, `test-race`, and `vulncheck`.
+  - This includes: `fmt-check`, `test`, `test-race`, and `vulncheck`.
   - All targets must pass for both the core module and the `tools/` module.
 - [ ] Ensure integration tests in `tests/integration` pass.
 

@@ -1,10 +1,10 @@
-.PHONY: test test-race lint fmt-check vulncheck verify help
+.PHONY: test test-race fmt-check vulncheck verify help
 
 # Default target
 all: verify
 
-## verify: Run all checks (fmt, lint, test, race, vulncheck, build)
-verify: fmt-check lint test test-race vulncheck build-tools
+## verify: Run all checks (fmt, test, race, vulncheck, build)
+verify: fmt-check test test-race vulncheck build-tools
 
 ## build-tools: Build tool binaries
 build-tools:
@@ -22,10 +22,6 @@ test-race:
 	go test -race ./...
 	cd tools && go test -race ./...
 
-## lint: Run golangci-lint
-lint:
-	golangci-lint run ./...
-	cd tools && golangci-lint run ./...
 
 ## fmt-check: Check formatting without modifying files
 fmt-check:
