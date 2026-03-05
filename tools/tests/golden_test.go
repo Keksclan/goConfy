@@ -75,17 +75,23 @@ func TestGolden(t *testing.T) {
 
 		// Capture stdout
 		oldStdout := os.Stdout
-		r, w, _ := os.Pipe()
+		r, w, err := os.Pipe()
+		if err != nil {
+			t.Fatalf("failed to create pipe: %v", err)
+		}
 		os.Stdout = w
+		defer func() {
+			os.Stdout = oldStdout
+		}()
+		defer r.Close()
+		defer w.Close()
 
 		args := []string{"-id", "test-config", "-in", inPath}
-		err := commands.RunDump(args)
-
+		runErr := commands.RunDump(args)
 		w.Close()
-		os.Stdout = oldStdout
 
-		if err != nil {
-			t.Fatalf("RunDump failed: %v", err)
+		if runErr != nil {
+			t.Fatalf("RunDump failed: %v", runErr)
 		}
 
 		var buf bytes.Buffer
