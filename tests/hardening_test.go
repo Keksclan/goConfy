@@ -31,7 +31,10 @@ func TestRedactByConvention(t *testing.T) {
 
 	// 1. Without convention (default)
 	redacted := goconfy.Redacted(cfg)
-	m := redacted.(map[string]any)
+	m, ok := redacted.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map[string]any, got %T", redacted)
+	}
 
 	if m["db_password"] != "password123" {
 		t.Errorf("expected db_password to be plaintext, got %v", m["db_password"])
@@ -39,7 +42,10 @@ func TestRedactByConvention(t *testing.T) {
 
 	// 2. With convention
 	redacted = goconfy.Redacted(cfg, goconfy.WithRedactByConventionOption(true))
-	m = redacted.(map[string]any)
+	m, ok = redacted.(map[string]any)
+	if !ok {
+		t.Fatalf("expected map[string]any, got %T", redacted)
+	}
 
 	secrets := []string{"db_password", "apiToken", "user_key"}
 	for _, s := range secrets {
@@ -51,7 +57,10 @@ func TestRedactByConvention(t *testing.T) {
 		t.Errorf("expected safe_field to be plaintext, got %v", m["safe_field"])
 	}
 
-	nested := m["nested"].(map[string]any)
+	nested, ok := m["nested"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected nested map[string]any, got %T", m["nested"])
+	}
 	if nested["secret_value"] != "[REDACTED]" {
 		t.Errorf("expected nested.secret_value to be redacted, got %v", nested["secret_value"])
 	}
