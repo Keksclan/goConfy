@@ -43,6 +43,8 @@ func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path str
 			collectBaseEntries[T](node.Content[i+1], report, newPath, opts)
 		}
 	case yaml.SequenceNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
+		report.AddEntry(path, explain.SourceBase, "[]", isSecret, "")
 		for i, child := range node.Content {
 			newPath := fmt.Sprintf("%s[%d]", path, i)
 			collectBaseEntries[T](child, report, newPath, opts)
@@ -109,6 +111,8 @@ func collectOverrides[T any](node *yaml.Node, report *explain.Report, path strin
 			collectOverrides[T](valNode, report, newPath, profileName, opts)
 		}
 	case yaml.SequenceNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
+		report.AddEntry(path, explain.SourceProfile, "[]", isSecret, fmt.Sprintf("from profile %q", profileName))
 		for i, child := range node.Content {
 			newPath := fmt.Sprintf("%s[%d]", path, i)
 			collectOverrides[T](child, report, newPath, profileName, opts)

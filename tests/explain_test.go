@@ -193,3 +193,41 @@ servers:
 		t.Errorf("Expected 2 password entries in report, found %d", foundPasswords)
 	}
 }
+
+func TestExplainProfileListOverride(t *testing.T) {
+	type Config struct {
+		Items []string `yaml:"items"`
+	}
+	yamlData := `
+items:
+  - "base1"
+profiles:
+  prod:
+    items: []
+`
+	var capturedReport explain.Report
+	reporter := func(r explain.Report) {
+		capturedReport = r
+	}
+
+	_, err := goconfy.Load[Config](
+		goconfy.WithBytes([]byte(yamlData)),
+		goconfy.WithExplainReporter(reporter),
+		goconfy.WithEnableProfiles(true),
+		goconfy.WithProfile("prod"),
+	)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	foundItemsOverride := false
+	for _, e := range capturedReport.Entries {
+		if e.Path == "items" && e.Source == explain.SourceProfile && e.ValueRedacted == "[]" {
+			foundItemsOverride = true
+		}
+	}
+
+	if !foundItemsOverride {
+		t.Error("items path should be recorded as overridden by profile with value []")
+	}
+}
