@@ -23,6 +23,8 @@ It provides a complete configuration pipeline: YAML parsing → environment macr
 go get github.com/keksclan/goConfy@latest
 ```
 
+Requires **Go 1.22+**.
+
 This installs the **core runtime loader** only.
 
 Optional generator/TUI tooling lives in a separate module at `./tools`.

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **YAML Benchmarks**: Added `internal/bench/yaml_bench_test.go` to monitor YAML parsing and decoding performance.
+
+### Changed
+- **Minimum Go Version**: Lowered minimum Go version from 1.26 to 1.22.
+- **YAML Parser Review**: Evaluated `github.com/goccy/go-yaml` for performance. Decided to stay with `gopkg.in/yaml.v3` to preserve strict `yaml.Node` AST compatibility (line/column info, macro expansion, and profile merging logic).
+
+### Added
 - **Full-Check & Release-Readiness**: Central `make verify` umbrella target for fmt, lint, tests, race detector, and vulncheck.
 - **Integration Test Suite**: New black-box integration tests in `tests/integration` covering the full pipeline (Load -> Merge -> Expand -> Normalize -> Validate -> Redact -> Explain).
 - **MultiError Support**: Validation errors are now aggregated into a `MultiError` for better feedback.
