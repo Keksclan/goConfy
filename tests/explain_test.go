@@ -109,3 +109,84 @@ func TestExplainDisabled_NoAllocations(t *testing.T) {
 		t.Fatalf("Load failed: %v", err)
 	}
 }
+
+func TestExplainSecretInSlice(t *testing.T) {
+	type Config struct {
+		Tokens []string `yaml:"tokens" secret:"true"`
+	}
+	yamlData := `
+tokens:
+  - "secret-token-1"
+  - "secret-token-2"
+`
+	var capturedReport explain.Report
+	reporter := func(r explain.Report) {
+		capturedReport = r
+	}
+
+	_, err := goconfy.Load[Config](
+		goconfy.WithBytes([]byte(yamlData)),
+		goconfy.WithExplainReporter(reporter),
+	)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	foundTokens := 0
+	for _, e := range capturedReport.Entries {
+		if strings.HasPrefix(e.Path, "tokens[") {
+			foundTokens++
+			if !e.IsSecret {
+				t.Errorf("Path %s should be marked as secret", e.Path)
+			}
+			if e.ValueRedacted != "[REDACTED]" {
+				t.Errorf("Path %s value should be redacted, got: %s", e.Path, e.ValueRedacted)
+			}
+		}
+	}
+	if foundTokens != 2 {
+		t.Errorf("Expected 2 token entries in report, found %d", foundTokens)
+	}
+}
+
+func TestExplainSecretInNestedSlice(t *testing.T) {
+	type Server struct {
+		Password string `yaml:"password" secret:"true"`
+	}
+	type Config struct {
+		Servers []Server `yaml:"servers"`
+	}
+	yamlData := `
+servers:
+  - password: "pass1"
+  - password: "pass2"
+`
+	var capturedReport explain.Report
+	reporter := func(r explain.Report) {
+		capturedReport = r
+	}
+
+	_, err := goconfy.Load[Config](
+		goconfy.WithBytes([]byte(yamlData)),
+		goconfy.WithExplainReporter(reporter),
+	)
+	if err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	foundPasswords := 0
+	for _, e := range capturedReport.Entries {
+		if strings.HasPrefix(e.Path, "servers[") && strings.HasSuffix(e.Path, ".password") {
+			foundPasswords++
+			if !e.IsSecret {
+				t.Errorf("Path %s should be marked as secret", e.Path)
+			}
+			if e.ValueRedacted != "[REDACTED]" {
+				t.Errorf("Path %s value should be redacted, got: %s", e.Path, e.ValueRedacted)
+			}
+		}
+	}
+	if foundPasswords != 2 {
+		t.Errorf("Expected 2 password entries in report, found %d", foundPasswords)
+	}
+}

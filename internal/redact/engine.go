@@ -23,7 +23,7 @@ func IsSecret(t reflect.Type, path string, opts Options) bool {
 	if t == nil {
 		return false
 	}
-	for t.Kind() == reflect.Ptr || t.Kind() == reflect.Interface {
+	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
@@ -38,12 +38,28 @@ func IsSecret(t reflect.Type, path string, opts Options) bool {
 	parts := strings.Split(path, ".")
 	curr := t
 	for i, part := range parts {
+		// Strip indices like [0] from the part to match struct field names
+		cleanPart := part
+		if idx := strings.IndexByte(part, '['); idx != -1 {
+			cleanPart = part[:idx]
+		}
+
 		found := false
 		for j := 0; j < curr.NumField(); j++ {
 			field := curr.Field(j)
 			name := fieldName(field)
-			if name == part {
-				fullPath := strings.Join(parts[:i+1], ".")
+			if name == cleanPart {
+				// Also strip indices from parts used to build fullPath for pathSet match
+				fullPathParts := make([]string, i+1)
+				for k := 0; k <= i; k++ {
+					p := parts[k]
+					if idx := strings.IndexByte(p, '['); idx != -1 {
+						p = p[:idx]
+					}
+					fullPathParts[k] = p
+				}
+				fullPath := strings.Join(fullPathParts, ".")
+
 				if field.Tag.Get("secret") == "true" || pathSet[fullPath] || (opts.ByConvention && IsConventionSecret(name)) {
 					return true
 				}
@@ -51,7 +67,7 @@ func IsSecret(t reflect.Type, path string, opts Options) bool {
 					return false
 				}
 				curr = field.Type
-				for curr.Kind() == reflect.Ptr || curr.Kind() == reflect.Interface {
+				for curr.Kind() == reflect.Ptr || curr.Kind() == reflect.Slice || curr.Kind() == reflect.Array {
 					curr = curr.Elem()
 				}
 				if curr.Kind() != reflect.Struct {
