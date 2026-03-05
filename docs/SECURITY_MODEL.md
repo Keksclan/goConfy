@@ -12,7 +12,7 @@ goConfy uses a custom macro format:
 
 The macro is **only expanded when it is the entire YAML scalar value**. The regexes enforce this:
 
-```
+```regex
 # ENV
 ^\{ENV:([A-Z0-9_]+)(?::([^}]*))?\}$
 
