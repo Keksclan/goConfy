@@ -25,19 +25,19 @@ func Load[T any](opts ...Option) (T, error) {
 	// 1. Read YAML bytes
 	data, err := readInput(cfg)
 	if err != nil {
-		return zero, fmt.Errorf("goconfy: %w", err)
+		return zero, &FieldError{Layer: "base", Message: err.Error()}
 	}
 
 	// 2. Parse into yaml.Node
 	node, err := yamlparse.ParseBytes(data)
 	if err != nil {
-		return zero, fmt.Errorf("goconfy: %w", err)
+		return zero, &FieldError{Layer: "base", Message: err.Error()}
 	}
 
 	// 3. Build env lookup chain (base + dotenv)
 	lookup, err := buildLookupChain(cfg)
 	if err != nil {
-		return zero, fmt.Errorf("goconfy: %w", err)
+		return zero, &FieldError{Layer: "dotenv", Message: err.Error()}
 	}
 
 	// 4. Expand env macros
@@ -47,6 +47,25 @@ func Load[T any](opts ...Option) (T, error) {
 		AllowedKeys: cfg.allowedEnvKeys,
 	}
 	if err := envmacro.ExpandNode(node, expandOpts); err != nil {
+		var fe *FieldError
+		if errors.As(err, &fe) {
+			fe.Layer = "base"
+			return zero, fe
+		}
+		// Fallback for internal envmacro errors that might not be FieldError yet
+		if ife, ok := err.(interface {
+			GetPath() string
+			GetLine() int
+			GetColumn() int
+		}); ok {
+			return zero, &FieldError{
+				Layer:   "base",
+				Path:    ife.GetPath(),
+				Line:    ife.GetLine(),
+				Column:  ife.GetColumn(),
+				Message: err.Error(),
+			}
+		}
 		return zero, fmt.Errorf("goconfy: env macro expansion: %w", err)
 	}
 
@@ -54,7 +73,7 @@ func Load[T any](opts ...Option) (T, error) {
 	if cfg.enableProfiles {
 		profileName := profiles.SelectProfile(cfg.profile, cfg.profileEnvVar)
 		if err := profiles.ApplyProfile(node, profileName); err != nil {
-			return zero, fmt.Errorf("goconfy: profile apply: %w", err)
+			return zero, &FieldError{Layer: "profile", Message: err.Error()}
 		}
 	}
 
@@ -66,14 +85,26 @@ func Load[T any](opts ...Option) (T, error) {
 
 	// 7. Strict decode into typed struct
 	var result T
-	if cfg.strictYAML {
-		if err := decode.Strict(yamlBytes, &result); err != nil {
-			return zero, fmt.Errorf("goconfy: %w", err)
+	decodeErr := func() error {
+		if cfg.strictYAML {
+			return decode.Strict(yamlBytes, &result)
 		}
-	} else {
-		if err := decode.Relaxed(yamlBytes, &result); err != nil {
-			return zero, fmt.Errorf("goconfy: %w", err)
+		return decode.Relaxed(yamlBytes, &result)
+	}()
+
+	if decodeErr != nil {
+		if ife, ok := decodeErr.(interface {
+			GetField() string
+			GetLine() int
+		}); ok {
+			return zero, &FieldError{
+				Layer:   "base",
+				Field:   ife.GetField(),
+				Line:    ife.GetLine(),
+				Message: decodeErr.Error(),
+			}
 		}
+		return zero, fmt.Errorf("goconfy: %w", decodeErr)
 	}
 
 	// 8. Call Normalize() if implemented
