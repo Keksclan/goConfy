@@ -256,6 +256,22 @@ secret_key: "{ENV:SECRET_KEY}"
 		}
 
 		// Verify report entries
+		var foundPassword, foundSecretKey bool
+		for _, entry := range capturedReport.Entries {
+			if entry.Path == "db.password" {
+				foundPassword = true
+			}
+			if entry.Path == "secret_key" {
+				foundSecretKey = true
+			}
+		}
+		if !foundPassword {
+			t.Fatalf("missing report entry for path %q", "db.password")
+		}
+		if !foundSecretKey {
+			t.Fatalf("missing report entry for path %q", "secret_key")
+		}
+
 		for _, entry := range capturedReport.Entries {
 			if entry.Path == "db.password" || entry.Path == "secret_key" {
 				if !entry.IsSecret {
