@@ -162,7 +162,7 @@ The `goconfygen` CLI can generate YAML templates from your Go struct types.
 ### Build the CLI
 
 ```bash
-(cd tools && go build -o ../goconfygen ./cmd/goconfygen)
+(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
 ```
 
 ### Register Your Config Type
@@ -196,7 +196,7 @@ func init() {
 ### Generate a YAML Template
 
 ```bash
-./goconfygen init -id myservice -out config.yml
+tools/bin/goconfygen init -id myservice -out config.yml
 ```
 
 This generates `config.yml` with defaults, macros, and comments.
@@ -204,7 +204,7 @@ This generates `config.yml` with defaults, macros, and comments.
 ### Validate a Config
 
 ```bash
-./goconfygen validate -id myservice -in config.yml
+tools/bin/goconfygen validate -id myservice -in config.yml
 ```
 
 Exit code 0 means the config is valid.
@@ -212,7 +212,7 @@ Exit code 0 means the config is valid.
 ### Dump Redacted Config
 
 ```bash
-./goconfygen dump -id myservice -in config.yml
+tools/bin/goconfygen dump -id myservice -in config.yml
 ```
 
 Prints the resolved config as redacted JSON.
@@ -266,13 +266,13 @@ operations as the CLI in a keyboard-driven terminal interface.
 ```bash
 go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 # or build locally
-(cd tools && go build -o ../goconfytui ./cmd/goconfytui)
+(cd tools && go build -o bin/goconfytui ./cmd/goconfytui)
 ```
 
 ### Quick Start
 
 ```bash
-./goconfytui
+tools/bin/goconfytui
 ```
 
 1. Select **Open / Inspect config** from the menu.
