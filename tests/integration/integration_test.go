@@ -3,6 +3,7 @@ package integration
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -180,15 +181,16 @@ db:
 `
 		// Create a temp .env file
 		dotenv := "ONLY_IN_DOTENV=secret-val"
-		err := os.WriteFile("testdata/temp.env", []byte(dotenv), 0644)
+		dir := t.TempDir()
+		envFile := filepath.Join(dir, "temp.env")
+		err := os.WriteFile(envFile, []byte(dotenv), 0644)
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.Remove("testdata/temp.env")
 
 		_, err = goconfy.Load[FullConfig](
 			goconfy.WithBytes([]byte(yaml)),
-			goconfy.WithDotEnvFile("testdata/temp.env"),
+			goconfy.WithDotEnvFile(envFile),
 		)
 		if err != nil {
 			t.Fatalf("failed to load: %v", err)
