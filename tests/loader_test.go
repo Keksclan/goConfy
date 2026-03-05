@@ -134,10 +134,44 @@ port: 0
 }
 
 func TestFieldError(t *testing.T) {
-	fe := &goconfy.FieldError{Field: "port", Message: "must be positive"}
-	expected := `field "port": must be positive`
-	if fe.Error() != expected {
-		t.Errorf("expected %q, got %q", expected, fe.Error())
+	tests := []struct {
+		name     string
+		err      *goconfy.FieldError
+		expected string
+	}{
+		{
+			name:     "field only",
+			err:      &goconfy.FieldError{Field: "port", Message: "must be positive"},
+			expected: `field "port": must be positive`,
+		},
+		{
+			name:     "line only",
+			err:      &goconfy.FieldError{Line: 3, Message: "some error"},
+			expected: "line 3: some error",
+		},
+		{
+			name:     "line and column",
+			err:      &goconfy.FieldError{Line: 3, Column: 5, Message: "some error"},
+			expected: "line 3, col 5: some error",
+		},
+		{
+			name:     "path and line",
+			err:      &goconfy.FieldError{Path: "db.port", Line: 10, Message: "invalid"},
+			expected: `path "db.port": line 10: invalid`,
+		},
+		{
+			name:     "layer, path, line, col",
+			err:      &goconfy.FieldError{Layer: "base", Path: "db.port", Line: 10, Column: 2, Message: "invalid"},
+			expected: `[base] path "db.port": line 10, col 2: invalid`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.err.Error() != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, tt.err.Error())
+			}
+		})
 	}
 }
 
@@ -160,6 +194,6 @@ func TestMultiError(t *testing.T) {
 	target := fmt.Errorf("err1")
 	_ = target
 	if !errors.Is(me, me.Errors[0]) {
-		// errors.Is with Unwrap()[]error works in Go 1.20+
+		t.Error("errors.Is failed to find wrapped error in MultiError")
 	}
 }

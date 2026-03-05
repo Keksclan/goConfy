@@ -93,8 +93,66 @@ host: "{ENV:ALLOWED_KEY:default}"
 		Lookup:      func(string) (string, bool) { return "", false },
 		AllowedKeys: []string{"OTHER_KEY"},
 	})
+	if err != nil {
+		t.Fatalf("unexpected error for disallowed key with default: %v", err)
+	}
+
+	values := extractScalars(node)
+	if values["host"] != "default" {
+		t.Errorf("expected default, got %q", values["host"])
+	}
+
+	// Case: disallowed key without default
+	input2 := `
+host: "{ENV:DISALLOWED_KEY}"
+`
+	node2 := parseYAML(t, input2)
+	err2 := envmacro.ExpandNode(node2, envmacro.ExpandOptions{
+		Lookup:      func(string) (string, bool) { return "should-not-be-reached", true },
+		AllowedKeys: []string{"OTHER_KEY"},
+	})
+	if err2 == nil {
+		t.Fatal("expected error for disallowed key without default")
+	}
+
+	if ife, ok := err2.(interface {
+		GetPath() string
+		GetLine() int
+	}); ok {
+		if ife.GetPath() != "host" {
+			t.Errorf("expected path 'host', got %q", ife.GetPath())
+		}
+		if ife.GetLine() != 2 {
+			t.Errorf("expected line 2, got %d", ife.GetLine())
+		}
+	} else {
+		t.Errorf("expected error to provide Path and Line, got %T: %v", err2, err2)
+	}
+}
+
+func TestExpandNodeDeepPath(t *testing.T) {
+	input := `
+server:
+  addr:
+    host: "{ENV:MISSING}"
+`
+	node := parseYAML(t, input)
+
+	err := envmacro.ExpandNode(node, envmacro.ExpandOptions{
+		Lookup: func(string) (string, bool) { return "", false },
+	})
 	if err == nil {
-		t.Fatal("expected error for disallowed key")
+		t.Fatal("expected error for missing env var")
+	}
+
+	if ife, ok := err.(interface {
+		GetPath() string
+	}); ok {
+		if ife.GetPath() != "server.addr.host" {
+			t.Errorf("expected path 'server.addr.host', got %q", ife.GetPath())
+		}
+	} else {
+		t.Errorf("expected error to provide Path, got %v", err)
 	}
 }
 

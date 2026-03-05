@@ -23,7 +23,7 @@ go run ./examples/basic
 
 Expected output:
 
-```
+```text
 Host: localhost
 Port: 8080
 Timeout: 30s

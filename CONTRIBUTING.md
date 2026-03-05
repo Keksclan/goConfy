@@ -4,7 +4,7 @@ Thank you for your interest in contributing to goConfy!
 
 ## Prerequisites
 
-- Go 1.26+
+- Go 1.22+
 - Git
 
 ## Getting Started
@@ -43,22 +43,35 @@ go test -v -run TestLoaderBasic ./tests/...
 go vet ./...
 
 # Format all code
-gofmt -w .
+gofmt -w . tools/
 ```
 
 ## Building
 
 ```bash
-# Build all packages
+# Build core packages
 go build ./...
 
-# Build the CLI
-go build -o goconfygen ./cmd/goconfygen
+# Build optional tools module
+(cd tools && go build ./...)
 
-# Build examples
+# Build core examples
 go build ./examples/basic
 go build ./examples/dotenv
+
+# Build tool examples
+(cd tools && go build ./examples/generator)
 ```
+
+## Repository Hygiene
+
+To keep the repository clean and secure, please follow these rules:
+
+- **No Binaries**: Never commit compiled binaries, executables, or build artifacts (e.g., `*.exe`, `*.so`, `*.dylib`, `*.test`, `*.out`).
+- **Source Only**: The repository should only contain source code, documentation, and configuration files.
+- **Build Locally**: Generate builds and test binaries locally or let the CI handle them.
+- **Clean Commits**: Ensure your `.gitignore` is up to date and that no temporary files or IDE-specific settings are committed.
+- **Tools**: If you need to build tools in the `tools/` directory, use `go build` or `go install`. Do not commit the resulting binaries.
 
 ## Code Style
 

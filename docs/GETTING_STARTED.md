@@ -4,7 +4,7 @@ This tutorial walks you through using goConfy from scratch: loading configs, usi
 
 ## Prerequisites
 
-- **Go 1.26+** installed
+- **Go 1.22+** installed
 - A terminal (bash, PowerShell, or similar)
 
 ## 1. Clone the Repository
@@ -24,7 +24,7 @@ go test ./...
 
 Expected output:
 
-```
+```text
 ok      github.com/keksclan/goConfy/tests    1.5s
 ```
 
@@ -40,7 +40,7 @@ go run ./examples/basic
 
 Expected output (values depend on your environment):
 
-```
+```text
 Host: localhost
 Port: 8080
 Timeout: 30s
@@ -141,7 +141,7 @@ go run main.go
 
 Output:
 
-```
+```text
 Host: localhost
 Port: 3000
 {
@@ -162,7 +162,8 @@ The `goconfygen` CLI can generate YAML templates from your Go struct types.
 ### Build the CLI
 
 ```bash
-go build -o goconfygen ./cmd/goconfygen
+mkdir -p tools/bin
+(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
 ```
 
 ### Register Your Config Type
@@ -172,7 +173,7 @@ In your project, create a provider:
 ```go
 package config
 
-import "github.com/keksclan/goConfy/gen/registry"
+import "github.com/keksclan/goConfy/tools/generator/registry"
 
 type Config struct {
     Host string `yaml:"host" default:"localhost" desc:"Server hostname"`
@@ -196,7 +197,7 @@ func init() {
 ### Generate a YAML Template
 
 ```bash
-./goconfygen init -id myservice -out config.yml
+tools/bin/goconfygen init -id myservice -out config.yml
 ```
 
 This generates `config.yml` with defaults, macros, and comments.
@@ -204,7 +205,7 @@ This generates `config.yml` with defaults, macros, and comments.
 ### Validate a Config
 
 ```bash
-./goconfygen validate -id myservice -in config.yml
+tools/bin/goconfygen validate -id myservice -in config.yml
 ```
 
 Exit code 0 means the config is valid.
@@ -212,7 +213,7 @@ Exit code 0 means the config is valid.
 ### Dump Redacted Config
 
 ```bash
-./goconfygen dump -id myservice -in config.yml
+tools/bin/goconfygen dump -id myservice -in config.yml
 ```
 
 Prints the resolved config as redacted JSON.
@@ -258,21 +259,22 @@ goconfy.WithProfile("prod")
 
 ## 8. Using the TUI
 
-goConfy ships with an interactive TUI (`goconfytui`) that provides the same
+goConfy provides an interactive TUI (`goconfytui`) in the optional `tools` module that provides the same
 operations as the CLI in a keyboard-driven terminal interface.
 
 ### Install
 
 ```bash
-go install github.com/keksclan/goConfy/cmd/goconfytui@latest
+go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 # or build locally
-go build ./cmd/goconfytui
+mkdir -p tools/bin
+(cd tools && go build -o bin/goconfytui ./cmd/goconfytui)
 ```
 
 ### Quick Start
 
 ```bash
-./goconfytui
+tools/bin/goconfytui
 ```
 
 1. Select **Open / Inspect config** from the menu.
@@ -287,7 +289,7 @@ go build ./cmd/goconfytui
 6. From the home menu use `3` to validate, `4` to format, `5` to dump, `6` for settings.
 7. Press `?` at any time for a help overlay.
 
-See [examples/tui/README.md](../examples/tui/README.md) for a full walkthrough with sample files.
+See [tools/examples/tui/README.md](../tools/examples/tui/README.md) for a full walkthrough with sample files.
 
 ## Troubleshooting
 

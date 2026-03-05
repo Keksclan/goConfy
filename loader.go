@@ -4,13 +4,124 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 
+	"github.com/keksclan/goConfy/explain"
 	"github.com/keksclan/goConfy/internal/decode"
 	"github.com/keksclan/goConfy/internal/dotenv"
-	"github.com/keksclan/goConfy/internal/envmacro"
+	"github.com/keksclan/goConfy/internal/macros"
 	"github.com/keksclan/goConfy/internal/profiles"
+	"github.com/keksclan/goConfy/internal/redact"
 	"github.com/keksclan/goConfy/internal/yamlparse"
+	"gopkg.in/yaml.v3"
 )
+
+func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path string, opts redact.Options) {
+	if node == nil || report == nil {
+		return
+	}
+
+	if path == "profiles" {
+		return
+	}
+
+	switch node.Kind {
+	case yaml.DocumentNode:
+		for _, child := range node.Content {
+			collectBaseEntries[T](child, report, path, opts)
+		}
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			key := node.Content[i].Value
+			if key == "profiles" && path == "" {
+				continue
+			}
+			newPath := key
+			if path != "" {
+				newPath = path + "." + key
+			}
+			collectBaseEntries[T](node.Content[i+1], report, newPath, opts)
+		}
+	case yaml.SequenceNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
+		report.AddEntry(path, explain.SourceBase, "[]", isSecret, "")
+		for i, child := range node.Content {
+			newPath := fmt.Sprintf("%s[%d]", path, i)
+			collectBaseEntries[T](child, report, newPath, opts)
+		}
+	case yaml.ScalarNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
+		report.AddEntry(path, explain.SourceBase, node.Value, isSecret, "")
+	}
+}
+
+func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profileName string, opts redact.Options) {
+	if root == nil || report == nil || profileName == "" {
+		return
+	}
+
+	mapping := root
+	if root.Kind == yaml.DocumentNode && len(root.Content) > 0 {
+		mapping = root.Content[0]
+	}
+
+	if mapping.Kind != yaml.MappingNode {
+		return
+	}
+
+	var profilesNode *yaml.Node
+	for i := 0; i < len(mapping.Content)-1; i += 2 {
+		if mapping.Content[i].Value == "profiles" {
+			profilesNode = mapping.Content[i+1]
+			break
+		}
+	}
+
+	if profilesNode == nil || profilesNode.Kind != yaml.MappingNode {
+		return
+	}
+
+	var overrideNode *yaml.Node
+	for i := 0; i < len(profilesNode.Content)-1; i += 2 {
+		if profilesNode.Content[i].Value == profileName {
+			overrideNode = profilesNode.Content[i+1]
+			break
+		}
+	}
+
+	if overrideNode != nil && overrideNode.Kind == yaml.MappingNode {
+		collectOverrides[T](overrideNode, report, "", profileName, opts)
+	}
+}
+
+func collectOverrides[T any](node *yaml.Node, report *explain.Report, path string, profileName string, opts redact.Options) {
+	if node == nil || report == nil {
+		return
+	}
+
+	switch node.Kind {
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			key := node.Content[i].Value
+			valNode := node.Content[i+1]
+			newPath := key
+			if path != "" {
+				newPath = path + "." + key
+			}
+			collectOverrides[T](valNode, report, newPath, profileName, opts)
+		}
+	case yaml.SequenceNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
+		report.AddEntry(path, explain.SourceProfile, "[]", isSecret, fmt.Sprintf("from profile %q", profileName))
+		for i, child := range node.Content {
+			newPath := fmt.Sprintf("%s[%d]", path, i)
+			collectOverrides[T](child, report, newPath, profileName, opts)
+		}
+	case yaml.ScalarNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
+		report.AddEntry(path, explain.SourceProfile, node.Value, isSecret, fmt.Sprintf("from profile %q", profileName))
+	}
+}
 
 // Load reads, parses, expands, decodes, normalizes, and validates a YAML
 // configuration into a typed struct T.
@@ -25,36 +136,97 @@ func Load[T any](opts ...Option) (T, error) {
 	// 1. Read YAML bytes
 	data, err := readInput(cfg)
 	if err != nil {
-		return zero, fmt.Errorf("goconfy: %w", err)
+		return zero, &FieldError{Layer: "base", Message: err.Error()}
 	}
 
 	// 2. Parse into yaml.Node
 	node, err := yamlparse.ParseBytes(data)
 	if err != nil {
-		return zero, fmt.Errorf("goconfy: %w", err)
+		return zero, &FieldError{Layer: "base", Message: err.Error()}
+	}
+
+	// 2.5 Prepare Explain Report (must be before expansion to capture origins)
+	var report *explain.Report
+	redactOpts := redact.Options{
+		Paths:        cfg.redactionPaths,
+		ByConvention: cfg.redactByConvention,
+	}
+
+	if cfg.explainReporter != nil {
+		report = explain.NewReport()
+		collectBaseEntries[T](node, report, "", redactOpts)
 	}
 
 	// 3. Build env lookup chain (base + dotenv)
 	lookup, err := buildLookupChain(cfg)
 	if err != nil {
-		return zero, fmt.Errorf("goconfy: %w", err)
+		return zero, &FieldError{Layer: "dotenv", Message: err.Error()}
 	}
 
 	// 4. Expand env macros
-	expandOpts := envmacro.ExpandOptions{
-		Lookup:      lookup,
-		Prefix:      cfg.envPrefix,
+	expandOpts := macros.ExpandOptions{
+		LookupEnv:   lookup,
+		EnvPrefix:   cfg.envPrefix,
 		AllowedKeys: cfg.allowedEnvKeys,
 	}
-	if err := envmacro.ExpandNode(node, expandOpts); err != nil {
+
+	if report != nil {
+		expandOpts.OnExpand = func(path, key, value string, source string) {
+			isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), redactOpts)
+			lookupKey := key
+			if source == "env" && cfg.envPrefix != "" {
+				lookupKey = cfg.envPrefix + key
+			}
+
+			origin := explain.SourceEnv
+			notes := ""
+			switch source {
+			case "env":
+				origin = explain.SourceEnv
+				notes = fmt.Sprintf("expanded {ENV:%s}", lookupKey)
+			case "file":
+				origin = explain.SourceFile
+				notes = fmt.Sprintf("expanded {FILE:%s}", key)
+			case "default":
+				origin = explain.SourceDefault
+				notes = "expanded macro default"
+			}
+
+			report.AddEntry(path, origin, value, isSecret, notes)
+		}
+	}
+
+	if err := macros.ExpandNode(node, expandOpts); err != nil {
+		var fe *FieldError
+		if errors.As(err, &fe) {
+			fe.Layer = "base"
+			return zero, fe
+		}
+		// Fallback for internal envmacro errors that might not be FieldError yet
+		if ife, ok := err.(interface {
+			GetPath() string
+			GetLine() int
+			GetColumn() int
+		}); ok {
+			return zero, &FieldError{
+				Layer:   "base",
+				Path:    ife.GetPath(),
+				Line:    ife.GetLine(),
+				Column:  ife.GetColumn(),
+				Message: err.Error(),
+			}
+		}
 		return zero, fmt.Errorf("goconfy: env macro expansion: %w", err)
 	}
 
 	// 5. Apply profile override (if enabled)
 	if cfg.enableProfiles {
 		profileName := profiles.SelectProfile(cfg.profile, cfg.profileEnvVar)
+		if report != nil && profileName != "" {
+			collectProfileEntries[T](node, report, profileName, redactOpts)
+		}
 		if err := profiles.ApplyProfile(node, profileName); err != nil {
-			return zero, fmt.Errorf("goconfy: profile apply: %w", err)
+			return zero, &FieldError{Layer: "profile", Message: err.Error()}
 		}
 	}
 
@@ -66,14 +238,28 @@ func Load[T any](opts ...Option) (T, error) {
 
 	// 7. Strict decode into typed struct
 	var result T
-	if cfg.strictYAML {
-		if err := decode.Strict(yamlBytes, &result); err != nil {
-			return zero, fmt.Errorf("goconfy: %w", err)
+	decodeErr := func() error {
+		if cfg.strictYAML {
+			return decode.Strict(yamlBytes, &result)
 		}
-	} else {
-		if err := decode.Relaxed(yamlBytes, &result); err != nil {
-			return zero, fmt.Errorf("goconfy: %w", err)
+		return decode.Relaxed(yamlBytes, &result)
+	}()
+
+	if decodeErr != nil {
+		if ife, ok := decodeErr.(interface {
+			GetField() string
+			GetLine() int
+			GetColumn() int
+		}); ok {
+			return zero, &FieldError{
+				Layer:   "base",
+				Field:   ife.GetField(),
+				Line:    ife.GetLine(),
+				Column:  ife.GetColumn(),
+				Message: decodeErr.Error(),
+			}
 		}
+		return zero, fmt.Errorf("goconfy: %w", decodeErr)
 	}
 
 	// 8. Call Normalize() if implemented
@@ -86,6 +272,10 @@ func Load[T any](opts ...Option) (T, error) {
 		if err := v.Validate(); err != nil {
 			return zero, fmt.Errorf("goconfy: validation: %w", err)
 		}
+	}
+
+	if report != nil {
+		cfg.explainReporter(*report)
 	}
 
 	return result, nil

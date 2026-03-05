@@ -9,11 +9,36 @@ import (
 type FieldError struct {
 	Field   string
 	Message string
+
+	// Optional details
+	Line   int
+	Column int
+	Layer  string
+	Path   string
 }
 
 // Error implements the error interface.
 func (e *FieldError) Error() string {
-	return fmt.Sprintf("field %q: %s", e.Field, e.Message)
+	var sb strings.Builder
+	if e.Layer != "" {
+		sb.WriteString(fmt.Sprintf("[%s] ", e.Layer))
+	}
+	if e.Path != "" {
+		sb.WriteString(fmt.Sprintf("path %q: ", e.Path))
+	} else if e.Field != "" {
+		sb.WriteString(fmt.Sprintf("field %q: ", e.Field))
+	}
+
+	if e.Line > 0 {
+		if e.Column > 0 {
+			sb.WriteString(fmt.Sprintf("line %d, col %d: ", e.Line, e.Column))
+		} else {
+			sb.WriteString(fmt.Sprintf("line %d: ", e.Line))
+		}
+	}
+
+	sb.WriteString(e.Message)
+	return sb.String()
 }
 
 // MultiError collects multiple errors into a single error.

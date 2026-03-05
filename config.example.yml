@@ -1,0 +1,96 @@
+# goConfy Example Configuration
+# This file demonstrates the Best Practices & Config-Policy.
+# Use this as a template for your own configuration.
+
+# General application settings
+app:
+  # Service name used in logs and traces.
+  # Default: "goConfyService"
+  name: "goConfyService"
+
+  # Deployment environment.
+  # Erlaubte Werte: "development", "staging", "production".
+  # Default: "development"
+  env: "development"
+
+  # HTTP server port.
+  # Kann über die Environment-Variable APP_PORT überschrieben werden.
+  # Default: 8080
+  port: "{ENV:APP_PORT:8080}"
+
+  # Log verbosity level.
+  # Erlaubte Werte: "debug", "info", "warn", "error".
+  # Default: "info"
+  log_level: "info"
+
+# Database connection and pool settings
+db:
+  # Database server address.
+  # Default: "localhost"
+  host: "{ENV:DB_HOST:localhost}"
+
+  # Database port.
+  # Default: 5432
+  port: "{ENV:DB_PORT:5432}"
+
+  # Database username.
+  # Default: "postgres"
+  user: "{ENV:DB_USER:postgres}"
+
+  # Database password (secret).
+  # Muss über die Environment-Variable DB_PASSWORD gesetzt werden.
+  # Kein Default erlaubt aus Sicherheitsgründen.
+  password: "{ENV:DB_PASSWORD}"
+
+  # Database name.
+  # Default: "goconfy_db"
+  name: "goconfy_db"
+
+  # Maximum connection pool size.
+  # Default: 20
+  max_conns: 20
+
+  # Database connection timeout.
+  # Format: Go duration string (z.B. 5s, 1m).
+  # Default: 5s
+  timeout: "5s"
+
+# Redis cache settings
+redis:
+  # Redis connection URL.
+  # Beispiel: "redis://:password@host:6379/0"
+  # Default: "redis://localhost:6379"
+  url: "{ENV:REDIS_URL:redis://localhost:6379}"
+
+  # Default cache time-to-live.
+  # Format: Go duration string.
+  # Default: 1h
+  ttl: "1h"
+
+# Feature toggles
+features:
+  # Enable distributed tracing (OpenTelemetry).
+  # Default: false
+  enable_tracing: false
+
+  # Enable Prometheus metrics endpoint.
+  # Default: true
+  enable_metrics: true
+
+# Profile overrides
+# Hier können Werte für spezifische Umgebungen überschrieben werden.
+profiles:
+  production:
+    app:
+      env: "production"
+      log_level: "warn"
+    db:
+      max_conns: 100
+    features:
+      enable_tracing: true
+
+  staging:
+    app:
+      env: "staging"
+    db:
+      max_conns: 50

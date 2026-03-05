@@ -16,7 +16,8 @@ func Redacted[T any](cfg T, opts ...RedactOption) any {
 		opt(rc)
 	}
 	return redact.Apply(cfg, redact.Options{
-		Paths: rc.paths,
+		Paths:        rc.paths,
+		ByConvention: rc.byConvention,
 	})
 }
 

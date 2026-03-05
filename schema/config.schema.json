@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "goConfy Reference Configuration",
+  "type": "object",
+  "properties": {
+    "app": {
+      "type": "object",
+      "description": "General application settings",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "goConfyService",
+          "description": "Service name used in logs and traces"
+        },
+        "env": {
+          "type": "string",
+          "enum": ["development", "staging", "production"],
+          "default": "development",
+          "description": "Deployment environment"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 8080,
+          "description": "HTTP server port"
+        },
+        "log_level": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info",
+          "description": "Log verbosity level"
+        }
+      },
+      "required": ["name", "env", "port", "log_level"],
+      "additionalProperties": false
+    },
+    "db": {
+      "type": "object",
+      "description": "Database connection and pool settings",
+      "properties": {
+        "host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Database host"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 5432,
+          "description": "Database port"
+        },
+        "user": {
+          "type": "string",
+          "default": "postgres",
+          "description": "Database username"
+        },
+        "password": {
+          "type": "string",
+          "description": "Database password (secret)"
+        },
+        "name": {
+          "type": "string",
+          "default": "goconfy_db",
+          "description": "Database name"
+        },
+        "max_conns": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 20,
+          "description": "Maximum connection pool size"
+        },
+        "timeout": {
+          "type": "string",
+          "pattern": "^[0-9]+(s|m|h|ms|us|ns)$",
+          "default": "5s",
+          "description": "Database connection timeout"
+        }
+      },
+      "required": ["host", "port", "user", "password", "name"],
+      "additionalProperties": false
+    },
+    "redis": {
+      "type": "object",
+      "description": "Redis cache settings",
+      "properties": {
+        "url": {
+          "type": "string",
+          "default": "redis://localhost:6379",
+          "description": "Redis connection URL"
+        },
+        "ttl": {
+          "type": "string",
+          "pattern": "^[0-9]+(s|m|h|ms|us|ns)$",
+          "default": "1h",
+          "description": "Default cache time-to-live"
+        }
+      },
+      "required": ["url"],
+      "additionalProperties": false
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature toggles",
+      "properties": {
+        "enable_tracing": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable distributed tracing"
+        },
+        "enable_metrics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Prometheus metrics endpoint"
+        }
+      },
+      "additionalProperties": false
+    },
+    "profiles": {
+      "type": "object",
+      "description": "Profile-specific overrides"
+    }
+  },
+  "required": ["app", "db", "redis", "features"],
+  "additionalProperties": false
+}

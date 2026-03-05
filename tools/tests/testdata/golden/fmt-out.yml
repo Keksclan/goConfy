@@ -1,0 +1,4 @@
+app: "myapp"
+port: 8080
+database:
+  host: localhost

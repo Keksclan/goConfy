@@ -6,15 +6,16 @@
 
 ```bash
 # Install from source
-go install github.com/keksclan/goConfy/cmd/goconfygen@latest
+go install github.com/keksclan/goConfy/tools/cmd/goconfygen@latest
 
 # Or build locally
-go build -o goconfygen ./cmd/goconfygen
+mkdir -p tools/bin
+(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
 ```
 
 ## Overview
 
-```
+```text
 goconfygen <command> [flags]
 
 Commands:
@@ -27,8 +28,8 @@ Commands:
 Running `goconfygen` without arguments prints usage information.
 
 > **TUI alternative:** All of the above operations are also available interactively
-> via `goconfytui`. See the [TUI section in README](../README.md#goconfytui-tui) or
-> run `go run ./cmd/goconfytui`.
+> via `goconfytui`. See [docs/GENERATOR.md](GENERATOR.md) or
+> run `(cd tools && go run ./cmd/goconfytui)`.
 
 ---
 
@@ -43,7 +44,7 @@ Because Go cannot import arbitrary packages at runtime, `goconfygen` uses a **re
 ```go
 package config
 
-import "github.com/keksclan/goConfy/gen/registry"
+import "github.com/keksclan/goConfy/tools/generator/registry"
 
 type configProvider struct{}
 
@@ -277,8 +278,9 @@ Add to your CI pipeline:
 # GitHub Actions example
 - name: Validate config
   run: |
-    go build -o goconfygen ./cmd/goconfygen
-    ./goconfygen validate -id myservice -in config.yml -dotenv .env.example
+    mkdir -p tools/bin
+    (cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
+    tools/bin/goconfygen validate -id myservice -in config.yml -dotenv .env.example
 ```
 
 ```bash
