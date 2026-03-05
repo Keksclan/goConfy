@@ -6,10 +6,18 @@ on:
   pull_request:
     branches: [ main, master ]
 
+permissions:
+  contents: read
+
 jobs:
   verify:
-    name: Full Verification (Core + Tools)
+    name: Verify (Go ${{ matrix.go-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ['1.22', 'stable']
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -17,16 +25,12 @@ jobs:
       - name: Binary Guard
         run: |
           echo "Checking for committed binaries..."
-          # Check for common binary extensions
           BINARIES=$(find . -type f \( -name "*.exe" -o -name "*.so" -o -name "*.dll" -o -name "*.dylib" -o -name "*.test" -o -name "*.out" -o -name "*.bin" \) -not -path "./.git/*")
           if [ ! -z "$BINARIES" ]; then
             echo "Error: Binary files found in repository:"
             echo "$BINARIES"
             exit 1
           fi
-
-          # Check for executable files that are not scripts or source code
-          # On Linux, -executable matches files with any execute bit set
           EXECUTABLES=$(find . -type f -executable -not -path "./.git/*" -not -name "*.sh" -not -name "*.go" -not -name "Makefile" -not -name "*.py")
           if [ ! -z "$EXECUTABLES" ]; then
              echo "Error: Executable files found in repository (should be source only):"
@@ -38,12 +42,106 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26'
+          go-version: ${{ matrix.go-version }}
           cache: true
 
-      - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.5
+      - name: Go Version Check
+        run: go version
 
-      - name: Run Verification (make verify)
-        run: make verify
+      - name: Check Formatting (gofmt)
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "The following files are not formatted:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Verify go.mod Tidy (Root)
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Verify go.mod Tidy (Tools)
+        run: |
+          cd tools
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Download Dependencies (Root)
+        run: go mod download
+
+      - name: Download Dependencies (Tools)
+        run: cd tools && go mod download
+
+      - name: Run Tests (Root)
+        run: go test -v ./...
+
+      - name: Run Tests (Tools)
+        run: cd tools && go test -v ./...
+
+      - name: Run Race Detector (Root)
+        if: matrix.go-version == 'stable'
+        run: go test -race -v ./...
+
+      - name: Run Race Detector (Tools)
+        if: matrix.go-version == 'stable'
+        run: cd tools && go test -race -v ./...
+
+      - name: Build Tools (Verify Compilation)
+        run: |
+          cd tools
+          go build -o /dev/null ./cmd/goconfygen
+          go build -o /dev/null ./cmd/goconfytui
+
+      - name: Global Git Diff Guard
+        run: git diff --exit-code
+
+      - name: Diagnostics (on failure)
+        if: failure()
+        run: |
+          echo "--- Diagnostics ---"
+          go env
+          echo "--- Modules (Root) ---"
+          go list -m all
+          echo "--- Modules (Tools) ---"
+          cd tools && go list -m all
+
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache: true
+      - name: golangci-lint (Root)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+          working-directory: .
+      - name: golangci-lint (Tools)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64
+          working-directory: tools
+
+  vulncheck:
+    name: Vulnerability Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache: true
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Run govulncheck (Root)
+        run: govulncheck ./...
+      - name: Run govulncheck (Tools)
+        run: cd tools && govulncheck ./...
