@@ -245,11 +245,13 @@ func Load[T any](opts ...Option) (T, error) {
 		if ife, ok := decodeErr.(interface {
 			GetField() string
 			GetLine() int
+			GetColumn() int
 		}); ok {
 			return zero, &FieldError{
 				Layer:   "base",
 				Field:   ife.GetField(),
 				Line:    ife.GetLine(),
+				Column:  ife.GetColumn(),
 				Message: decodeErr.Error(),
 			}
 		}

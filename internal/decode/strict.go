@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var yamlErrRegex = regexp.MustCompile(`line (\d+): field (.+) not found in type (.+)`)
+var yamlErrRegex = regexp.MustCompile(`line (\d+)(?:, col (\d+))?: field (.+) not found in type (.+)`)
 
 // Strict decodes YAML bytes into the target struct using strict mode,
 // which rejects unknown fields.
@@ -28,11 +28,16 @@ func Strict(data []byte, target any) error {
 func wrapError(err error) (error, bool) {
 	msg := err.Error()
 	matches := yamlErrRegex.FindStringSubmatch(msg)
-	if len(matches) == 4 {
+	if len(matches) == 5 {
 		line, _ := strconv.Atoi(matches[1])
-		field := matches[2]
+		col := 0
+		if matches[2] != "" {
+			col, _ = strconv.Atoi(matches[2])
+		}
+		field := matches[3]
 		return &fieldError{
 			Line:    line,
+			Column:  col,
 			Field:   field,
 			Message: fmt.Sprintf("unknown field %q", field),
 		}, true
@@ -56,6 +61,7 @@ func (e *fieldError) Error() string {
 
 func (e *fieldError) GetField() string { return e.Field }
 func (e *fieldError) GetLine() int     { return e.Line }
+func (e *fieldError) GetColumn() int   { return e.Column }
 
 // Relaxed decodes YAML bytes into the target struct without strict mode.
 func Relaxed(data []byte, target any) error {
