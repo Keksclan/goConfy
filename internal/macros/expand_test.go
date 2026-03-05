@@ -45,6 +45,7 @@ func TestFileMacroPattern(t *testing.T) {
 		{"{FILE:/etc/passwd}", true},
 		{"{FILE:C:\\secrets\\pwd}", true},
 		{"{FILE:C:\\secrets\\pwd:default}", true},
+		{"{FILE:/path/with:colon}", true},
 		// Must NOT match
 		{"http://{FILE:foo}/x", false},
 		{"prefix{FILE:/etc/passwd}", false},

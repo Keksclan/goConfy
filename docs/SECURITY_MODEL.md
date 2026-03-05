@@ -17,7 +17,7 @@ The macro is **only expanded when it is the entire YAML scalar value**. The rege
 ^\{ENV:([A-Z0-9_]+)(?::([^}]*))?\}$
 
 # FILE
-^\{FILE:([^:]+)(?::([^}]*))?\}$
+^\{FILE:([^}]+)\}$
 ```
 
 This is a deliberate security choice:
