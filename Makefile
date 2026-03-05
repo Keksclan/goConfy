@@ -25,9 +25,9 @@ test-race:
 
 ## fmt-check: Check formatting without modifying files
 fmt-check:
-	@if [ -n "$$(gofmt -l .)" ]; then \
+	@if [ -n "$$(gofmt -l . tools/)" ]; then \
 		echo "Following files are not formatted:"; \
-		gofmt -l .; \
+		gofmt -l . tools/; \
 		exit 1; \
 	fi
 

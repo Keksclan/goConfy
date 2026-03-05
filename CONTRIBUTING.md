@@ -43,7 +43,7 @@ go test -v -run TestLoaderBasic ./tests/...
 go vet ./...
 
 # Format all code
-gofmt -w .
+gofmt -w . tools/
 ```
 
 ## Building

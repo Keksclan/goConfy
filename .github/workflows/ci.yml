@@ -50,9 +50,9 @@ jobs:
 
       - name: Check Formatting (gofmt)
         run: |
-          if [ -n "$(gofmt -l .)" ]; then
+          if [ -n "$(gofmt -l . tools/)" ]; then
             echo "The following files are not formatted:"
-            gofmt -l .
+            gofmt -l . tools/
             exit 1
           fi
 
