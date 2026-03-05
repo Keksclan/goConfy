@@ -30,7 +30,11 @@ func (e *FieldError) Error() string {
 	}
 
 	if e.Line > 0 {
-		sb.WriteString(fmt.Sprintf("line %d, col %d: ", e.Line, e.Column))
+		if e.Column > 0 {
+			sb.WriteString(fmt.Sprintf("line %d, col %d: ", e.Line, e.Column))
+		} else {
+			sb.WriteString(fmt.Sprintf("line %d: ", e.Line))
+		}
 	}
 
 	sb.WriteString(e.Message)

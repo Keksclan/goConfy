@@ -173,7 +173,13 @@ type FieldError struct {
 }
 
 func (e *FieldError) Error() string {
-	return fmt.Sprintf("path %q: line %d, col %d: %s", e.Path, e.Line, e.Column, e.Message)
+	if e.Line > 0 {
+		if e.Column > 0 {
+			return fmt.Sprintf("path %q: line %d, col %d: %s", e.Path, e.Line, e.Column, e.Message)
+		}
+		return fmt.Sprintf("path %q: line %d: %s", e.Path, e.Line, e.Message)
+	}
+	return fmt.Sprintf("path %q: %s", e.Path, e.Message)
 }
 
 func (e *FieldError) GetPath() string { return e.Path }

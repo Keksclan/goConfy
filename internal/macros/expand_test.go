@@ -60,3 +60,35 @@ func TestFileMacroPattern(t *testing.T) {
 		}
 	}
 }
+
+func TestFieldError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      *FieldError
+		expected string
+	}{
+		{
+			name:     "path only",
+			err:      &FieldError{Path: "some.path", Message: "some error"},
+			expected: `path "some.path": some error`,
+		},
+		{
+			name:     "path and line",
+			err:      &FieldError{Path: "some.path", Line: 3, Message: "some error"},
+			expected: `path "some.path": line 3: some error`,
+		},
+		{
+			name:     "path, line, column",
+			err:      &FieldError{Path: "some.path", Line: 3, Column: 5, Message: "some error"},
+			expected: `path "some.path": line 3, col 5: some error`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.err.Error() != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, tt.err.Error())
+			}
+		})
+	}
+}
