@@ -163,7 +163,7 @@ The `goconfygen` CLI can generate YAML templates from your Go struct types.
 
 ```bash
 mkdir -p tools/bin
-(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
+(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
 ```
 
 ### Register Your Config Type
@@ -268,7 +268,7 @@ operations as the CLI in a keyboard-driven terminal interface.
 go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 # or build locally
 mkdir -p tools/bin
-(cd tools && go build -o ../tools/bin/goconfytui ./cmd/goconfytui)
+(cd tools && go build -o bin/goconfytui ./cmd/goconfytui)
 ```
 
 ### Quick Start

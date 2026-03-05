@@ -325,8 +325,8 @@ Or build locally from this repository:
 
 ```bash
 mkdir -p tools/bin
-(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
-(cd tools && go build -o ../tools/bin/goconfytui ./cmd/goconfytui)
+(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
+(cd tools && go build -o bin/goconfytui ./cmd/goconfytui)
 ```
 
 Provider registry import path for generator tooling:
@@ -362,7 +362,7 @@ Demonstrates the registry provider and goconfygen usage:
 ```bash
 # See tools/examples/generator/README.md for details
 mkdir -p tools/bin
-(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
+(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
 ```
 
 ### tools/examples/tui

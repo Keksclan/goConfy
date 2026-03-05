@@ -18,8 +18,9 @@ This checklist must be completed before tagging a new release of `goConfy`.
 - [ ] Build `goconfygen` and `goconfytui` locally to ensure no missing dependencies:
   ```bash
   cd tools
-  go build ./cmd/goconfygen
-  go build ./cmd/goconfytui
+  mkdir -p bin
+  go build -o bin/goconfygen ./cmd/goconfygen
+  go build -o bin/goconfytui ./cmd/goconfytui
   ```
 
 ## 4. Release Preparation

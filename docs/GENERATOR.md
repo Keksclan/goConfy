@@ -17,8 +17,8 @@ go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 
 ```bash
 mkdir -p tools/bin
-(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
-(cd tools && go build -o ../tools/bin/goconfytui ./cmd/goconfytui)
+(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
+(cd tools && go build -o bin/goconfytui ./cmd/goconfytui)
 ```
 
 ## Registry import path
