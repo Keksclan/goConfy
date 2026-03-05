@@ -11,8 +11,8 @@ import (
 )
 
 // FileMacroRegex is the regex for file macros.
-// Pattern: {FILE:/path/to/file} or {FILE:/path/to/file:default}
-var FileMacroRegex = regexp.MustCompile(`^\{FILE:([^:]+)(?::([^}]*))?\}$`)
+// Pattern: {FILE:/path/to/file}, {FILE:C:\path} or {FILE:/path:default}
+var FileMacroRegex = regexp.MustCompile(`^\{FILE:([^}]+)\}$`)
 
 // EnvMacroRegex is the regex for environment macros.
 // Pattern: {ENV:KEY} or {ENV:KEY:default}
@@ -75,16 +75,7 @@ func expandNode(node *yaml.Node, opts ExpandOptions, path string) error {
 func expandScalar(node *yaml.Node, opts ExpandOptions, path string) error {
 	// Try FILE macro
 	if matches := FileMacroRegex.FindStringSubmatch(node.Value); matches != nil {
-		filePath := matches[1]
-		defaultVal := matches[2]
-		// Count colons: {FILE:path} has 1, {FILE:path:} or {FILE:path:default} has 2+.
-		colons := 0
-		for _, ch := range matches[0] {
-			if ch == ':' {
-				colons++
-			}
-		}
-		hasDefault := colons >= 2
+		filePath, defaultVal, hasDefault := parseFileMacro(matches[1])
 
 		data, err := os.ReadFile(filePath)
 		if err != nil {
@@ -188,3 +179,18 @@ func (e *FieldError) Error() string {
 func (e *FieldError) GetPath() string { return e.Path }
 func (e *FieldError) GetLine() int    { return e.Line }
 func (e *FieldError) GetColumn() int  { return e.Column }
+
+func parseFileMacro(content string) (filePath, defaultVal string, hasDefault bool) {
+	lastIdx := strings.LastIndex(content, ":")
+	if lastIdx == -1 {
+		return content, "", false
+	}
+
+	if lastIdx == 1 && len(content) > 1 &&
+		((content[0] >= 'a' && content[0] <= 'z') || (content[0] >= 'A' && content[0] <= 'Z')) {
+		// Windows drive letter C: at the start, and it's the only colon
+		return content, "", false
+	}
+
+	return content[:lastIdx], content[lastIdx+1:], true
+}
