@@ -121,11 +121,13 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.64
+          install-mode: go-install
           working-directory: .
       - name: golangci-lint (Tools)
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.64
+          install-mode: go-install
           working-directory: tools
 
   vulncheck:
