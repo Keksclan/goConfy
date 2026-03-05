@@ -18,7 +18,10 @@ func BenchmarkParseSmallV3(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = yamlparse.ParseBytes(data)
+		_, err := yamlparse.ParseBytes(data)
+		if err != nil {
+			b.Fatalf("yaml parse error: %v", err)
+		}
 	}
 }
 
@@ -29,7 +32,10 @@ func BenchmarkParseMediumV3(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = yamlparse.ParseBytes(data)
+		_, err := yamlparse.ParseBytes(data)
+		if err != nil {
+			b.Fatalf("yaml parse error: %v", err)
+		}
 	}
 }
 
@@ -41,7 +47,10 @@ func BenchmarkParseLargeV3(b *testing.B) {
 	data := buf.Bytes()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = yamlparse.ParseBytes(data)
+		_, err := yamlparse.ParseBytes(data)
+		if err != nil {
+			b.Fatalf("yaml parse error: %v", err)
+		}
 	}
 }
 
