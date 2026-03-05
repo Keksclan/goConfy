@@ -89,8 +89,12 @@ func (r *Report) AddEntry(path string, source Source, value string, isSecret boo
 
 // WriteText writes the report in a human-readable table format.
 func (r Report) WriteText(w io.Writer) error {
-	fmt.Fprintf(w, "%-40s %-10s %-20s %-20s %s\n", "PATH", "SOURCE", "VALUE (REDACTED)", "OVERRIDES", "NOTES")
-	fmt.Fprintf(w, "%s\n", strings.Repeat("-", 120))
+	if _, err := fmt.Fprintf(w, "%-40s %-10s %-20s %-20s %s\n", "PATH", "SOURCE", "VALUE (REDACTED)", "OVERRIDES", "NOTES"); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(w, "%s\n", strings.Repeat("-", 120)); err != nil {
+		return err
+	}
 	for _, e := range r.Entries {
 		overrides := ""
 		if len(e.OverriddenBy) > 0 {
@@ -100,7 +104,9 @@ func (r Report) WriteText(w io.Writer) error {
 			}
 			overrides = strings.Join(sources, ", ")
 		}
-		fmt.Fprintf(w, "%-40s %-10s %-20s %-20s %s\n", e.Path, e.Source, e.ValueRedacted, overrides, e.Notes)
+		if _, err := fmt.Fprintf(w, "%-40s %-10s %-20s %-20s %s\n", e.Path, e.Source, e.ValueRedacted, overrides, e.Notes); err != nil {
+			return err
+		}
 	}
 	return nil
 }
