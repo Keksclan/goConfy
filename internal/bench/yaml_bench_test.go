@@ -12,7 +12,10 @@ import (
 )
 
 func BenchmarkParseSmallV3(b *testing.B) {
-	data, _ := os.ReadFile(filepath.Join("..", "..", "examples", "basic", "config.yml"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "examples", "basic", "config.yml"))
+	if err != nil {
+		b.Fatalf("failed to read small config file: %v", err)
+	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = yamlparse.ParseBytes(data)
@@ -20,7 +23,10 @@ func BenchmarkParseSmallV3(b *testing.B) {
 }
 
 func BenchmarkParseMediumV3(b *testing.B) {
-	data, _ := os.ReadFile(filepath.Join("..", "..", "config.example.yml"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "config.example.yml"))
+	if err != nil {
+		b.Fatalf("failed to read medium config file: %v", err)
+	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = yamlparse.ParseBytes(data)
@@ -40,7 +46,10 @@ func BenchmarkParseLargeV3(b *testing.B) {
 }
 
 func BenchmarkStrictDecodingV3(b *testing.B) {
-	data, _ := os.ReadFile(filepath.Join("..", "..", "config.example.yml"))
+	data, err := os.ReadFile(filepath.Join("..", "..", "config.example.yml"))
+	if err != nil {
+		b.Fatalf("failed to read example config file for strict decoding: %v", err)
+	}
 	type Config struct {
 		App struct {
 			Name     string `yaml:"name"`
