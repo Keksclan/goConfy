@@ -1,5 +1,9 @@
 package goconfy
 
+import (
+	"github.com/keksclan/goConfy/explain"
+)
+
 // Option configures the Load pipeline.
 type Option func(*config)
 
@@ -28,6 +32,8 @@ type config struct {
 	profile             string
 	redactionPaths      []string
 	inlineInterpolation bool
+
+	explainReporter explain.Reporter
 
 	// Dotenv options
 	dotEnvEnabled      bool
@@ -162,5 +168,12 @@ func WithDotEnvOptional(optional bool) Option {
 func WithRedactPaths(paths []string) RedactOption {
 	return func(c *redactConfig) {
 		c.paths = paths
+	}
+}
+
+// WithExplainReporter enables configuration reporting and sets the reporter function.
+func WithExplainReporter(reporter explain.Reporter) Option {
+	return func(c *config) {
+		c.explainReporter = reporter
 	}
 }

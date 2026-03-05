@@ -4,13 +4,115 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 
+	"github.com/keksclan/goConfy/explain"
 	"github.com/keksclan/goConfy/internal/decode"
 	"github.com/keksclan/goConfy/internal/dotenv"
 	"github.com/keksclan/goConfy/internal/envmacro"
 	"github.com/keksclan/goConfy/internal/profiles"
+	"github.com/keksclan/goConfy/internal/redact"
 	"github.com/keksclan/goConfy/internal/yamlparse"
+	"gopkg.in/yaml.v3"
 )
+
+func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path string) {
+	if node == nil || report == nil {
+		return
+	}
+
+	if path == "profiles" {
+		return
+	}
+
+	switch node.Kind {
+	case yaml.DocumentNode:
+		for _, child := range node.Content {
+			collectBaseEntries[T](child, report, path)
+		}
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			key := node.Content[i].Value
+			if key == "profiles" {
+				continue
+			}
+			newPath := key
+			if path != "" {
+				newPath = path + "." + key
+			}
+			collectBaseEntries[T](node.Content[i+1], report, newPath)
+		}
+	case yaml.SequenceNode:
+		for i, child := range node.Content {
+			newPath := fmt.Sprintf("%s[%d]", path, i)
+			collectBaseEntries[T](child, report, newPath)
+		}
+	case yaml.ScalarNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), path)
+		report.AddEntry(path, explain.SourceBase, node.Value, isSecret, "")
+	}
+}
+
+func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profileName string) {
+	if root == nil || report == nil || profileName == "" {
+		return
+	}
+
+	mapping := root
+	if root.Kind == yaml.DocumentNode && len(root.Content) > 0 {
+		mapping = root.Content[0]
+	}
+
+	if mapping.Kind != yaml.MappingNode {
+		return
+	}
+
+	var profilesNode *yaml.Node
+	for i := 0; i < len(mapping.Content)-1; i += 2 {
+		if mapping.Content[i].Value == "profiles" {
+			profilesNode = mapping.Content[i+1]
+			break
+		}
+	}
+
+	if profilesNode == nil || profilesNode.Kind != yaml.MappingNode {
+		return
+	}
+
+	var overrideNode *yaml.Node
+	for i := 0; i < len(profilesNode.Content)-1; i += 2 {
+		if profilesNode.Content[i].Value == profileName {
+			overrideNode = profilesNode.Content[i+1]
+			break
+		}
+	}
+
+	if overrideNode != nil && overrideNode.Kind == yaml.MappingNode {
+		collectOverrides[T](overrideNode, report, "", profileName)
+	}
+}
+
+func collectOverrides[T any](node *yaml.Node, report *explain.Report, path string, profileName string) {
+	if node.Kind != yaml.MappingNode {
+		return
+	}
+
+	for i := 0; i < len(node.Content)-1; i += 2 {
+		key := node.Content[i].Value
+		valNode := node.Content[i+1]
+		newPath := key
+		if path != "" {
+			newPath = path + "." + key
+		}
+
+		if valNode.Kind == yaml.MappingNode {
+			collectOverrides[T](valNode, report, newPath, profileName)
+		} else if valNode.Kind == yaml.ScalarNode {
+			isSecret := redact.IsSecret(reflect.TypeFor[T](), newPath)
+			report.AddEntry(newPath, explain.SourceProfile, valNode.Value, isSecret, fmt.Sprintf("from profile %q", profileName))
+		}
+	}
+}
 
 // Load reads, parses, expands, decodes, normalizes, and validates a YAML
 // configuration into a typed struct T.
@@ -34,6 +136,12 @@ func Load[T any](opts ...Option) (T, error) {
 		return zero, &FieldError{Layer: "base", Message: err.Error()}
 	}
 
+	var report *explain.Report
+	if cfg.explainReporter != nil {
+		report = explain.NewReport()
+		collectBaseEntries[T](node, report, "")
+	}
+
 	// 3. Build env lookup chain (base + dotenv)
 	lookup, err := buildLookupChain(cfg)
 	if err != nil {
@@ -46,6 +154,24 @@ func Load[T any](opts ...Option) (T, error) {
 		Prefix:      cfg.envPrefix,
 		AllowedKeys: cfg.allowedEnvKeys,
 	}
+
+	if report != nil {
+		expandOpts.OnExpand = func(path, key, value string, source string) {
+			isSecret := redact.IsSecret(reflect.TypeFor[T](), path)
+			lookupKey := key
+			if cfg.envPrefix != "" {
+				lookupKey = cfg.envPrefix + key
+			}
+
+			origin := explain.SourceEnv
+			// Check if it came from dotenv or OS
+			// We can use cfg.envLookup and the logic from buildLookupChain
+			// But for now, let's keep it simple or detect based on lookup source
+			// if we want to be more precise.
+			report.AddEntry(path, origin, value, isSecret, fmt.Sprintf("expanded {ENV:%s}", lookupKey))
+		}
+	}
+
 	if err := envmacro.ExpandNode(node, expandOpts); err != nil {
 		var fe *FieldError
 		if errors.As(err, &fe) {
@@ -72,6 +198,9 @@ func Load[T any](opts ...Option) (T, error) {
 	// 5. Apply profile override (if enabled)
 	if cfg.enableProfiles {
 		profileName := profiles.SelectProfile(cfg.profile, cfg.profileEnvVar)
+		if report != nil && profileName != "" {
+			collectProfileEntries[T](node, report, profileName)
+		}
 		if err := profiles.ApplyProfile(node, profileName); err != nil {
 			return zero, &FieldError{Layer: "profile", Message: err.Error()}
 		}
@@ -117,6 +246,10 @@ func Load[T any](opts ...Option) (T, error) {
 		if err := v.Validate(); err != nil {
 			return zero, fmt.Errorf("goconfy: validation: %w", err)
 		}
+	}
+
+	if report != nil {
+		cfg.explainReporter(*report)
 	}
 
 	return result, nil

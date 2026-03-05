@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [0.2.0] - 2026-02-19
 
 ### Added
+- **Explain Reporting**: Optional trace reporting for configuration values to track their origin (base, profile, env, etc.) without leaking secrets.
+  - `WithExplainReporter(func(explain.Report))`: Option to enable reporting.
+  - `explain.Report`: Structured report with path, source, overrides, and redacted values.
+  - Support for text and JSON report output.
 - **goconfygen CLI**: generator tool for YAML config templates, validation, formatting, and redacted dump
   - `goconfygen init`: generate YAML templates from registered Go config types
   - `goconfygen validate`: validate YAML against typed config structs

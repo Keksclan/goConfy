@@ -12,6 +12,7 @@ type ExpandOptions struct {
 	Lookup      LookupFunc
 	Prefix      string
 	AllowedKeys []string
+	OnExpand    func(path, key, value string, source string)
 }
 
 // ExpandNode recursively walks a yaml.Node tree and expands environment macros
@@ -59,13 +60,18 @@ func expandNode(node *yaml.Node, opts ExpandOptions, path string) error {
 			}
 		}
 	case yaml.ScalarNode:
-		return expandScalar(node, lookup, opts.Prefix, opts.AllowedKeys, path)
+		return expandScalar(node, opts, path)
 	}
 
 	return nil
 }
 
-func expandScalar(node *yaml.Node, lookup LookupFunc, prefix string, allowedKeys []string, path string) error {
+func expandScalar(node *yaml.Node, opts ExpandOptions, path string) error {
+	lookup := opts.Lookup
+	if lookup == nil {
+		lookup = DefaultLookup
+	}
+
 	matches := EnvMacroRegex.FindStringSubmatch(node.Value)
 	if matches == nil {
 		return nil
@@ -74,7 +80,7 @@ func expandScalar(node *yaml.Node, lookup LookupFunc, prefix string, allowedKeys
 	key := matches[1]
 	defaultVal := matches[2]
 
-	if len(allowedKeys) > 0 && !slices.Contains(allowedKeys, key) {
+	if len(opts.AllowedKeys) > 0 && !slices.Contains(opts.AllowedKeys, key) {
 		return &fieldError{
 			Path:    path,
 			Line:    node.Line,
@@ -84,18 +90,24 @@ func expandScalar(node *yaml.Node, lookup LookupFunc, prefix string, allowedKeys
 	}
 
 	lookupKey := key
-	if prefix != "" {
-		lookupKey = prefix + key
+	if opts.Prefix != "" {
+		lookupKey = opts.Prefix + key
 	}
 
 	if val, ok := lookup(lookupKey); ok {
 		node.Value = val
 		node.Tag = ""
 		node.Style = 0
+		if opts.OnExpand != nil {
+			opts.OnExpand(path, key, val, "env")
+		}
 	} else if hasDefault(matches) {
 		node.Value = defaultVal
 		node.Tag = ""
 		node.Style = 0
+		if opts.OnExpand != nil {
+			opts.OnExpand(path, key, defaultVal, "default")
+		}
 	} else {
 		return &fieldError{
 			Path:    path,
