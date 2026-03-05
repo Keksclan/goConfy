@@ -1,4 +1,4 @@
-.PHONY: test test-race fmt-check vulncheck verify help
+.PHONY: all build-tools update-golden test test-race fmt-check vulncheck verify help
 
 # Default target
 all: verify
