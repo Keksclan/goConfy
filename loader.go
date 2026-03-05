@@ -48,7 +48,7 @@ func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path str
 			collectBaseEntries[T](child, report, newPath, opts)
 		}
 	case yaml.ScalarNode:
-		isSecret := redact.IsSecret(reflect.TypeFor[T](), path, opts)
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
 		report.AddEntry(path, explain.SourceBase, node.Value, isSecret, "")
 	}
 }
@@ -93,24 +93,29 @@ func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profi
 }
 
 func collectOverrides[T any](node *yaml.Node, report *explain.Report, path string, profileName string, opts redact.Options) {
-	if node.Kind != yaml.MappingNode {
+	if node == nil || report == nil {
 		return
 	}
 
-	for i := 0; i < len(node.Content)-1; i += 2 {
-		key := node.Content[i].Value
-		valNode := node.Content[i+1]
-		newPath := key
-		if path != "" {
-			newPath = path + "." + key
-		}
-
-		if valNode.Kind == yaml.MappingNode {
+	switch node.Kind {
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content)-1; i += 2 {
+			key := node.Content[i].Value
+			valNode := node.Content[i+1]
+			newPath := key
+			if path != "" {
+				newPath = path + "." + key
+			}
 			collectOverrides[T](valNode, report, newPath, profileName, opts)
-		} else if valNode.Kind == yaml.ScalarNode {
-			isSecret := redact.IsSecret(reflect.TypeFor[T](), newPath, opts)
-			report.AddEntry(newPath, explain.SourceProfile, valNode.Value, isSecret, fmt.Sprintf("from profile %q", profileName))
 		}
+	case yaml.SequenceNode:
+		for i, child := range node.Content {
+			newPath := fmt.Sprintf("%s[%d]", path, i)
+			collectOverrides[T](child, report, newPath, profileName, opts)
+		}
+	case yaml.ScalarNode:
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), opts)
+		report.AddEntry(path, explain.SourceProfile, node.Value, isSecret, fmt.Sprintf("from profile %q", profileName))
 	}
 }
 
@@ -163,7 +168,7 @@ func Load[T any](opts ...Option) (T, error) {
 
 	if report != nil {
 		expandOpts.OnExpand = func(path, key, value string, source string) {
-			isSecret := redact.IsSecret(reflect.TypeFor[T](), path, redactOpts)
+			isSecret := redact.IsSecret(reflect.TypeFor[T](), redact.StripIndices(path), redactOpts)
 			lookupKey := key
 			if source == "env" && cfg.envPrefix != "" {
 				lookupKey = cfg.envPrefix + key

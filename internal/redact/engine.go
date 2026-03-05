@@ -19,6 +19,7 @@ type Options struct {
 
 // IsSecret checks if a given path in a struct type is marked as secret.
 // It considers struct tags, explicit paths, and name conventions if enabled.
+// It expects a dot-separated path (e.g., "db.password").
 func IsSecret(t reflect.Type, path string, opts Options) bool {
 	if t == nil {
 		return false
@@ -38,27 +39,12 @@ func IsSecret(t reflect.Type, path string, opts Options) bool {
 	parts := strings.Split(path, ".")
 	curr := t
 	for i, part := range parts {
-		// Strip indices like [0] from the part to match struct field names
-		cleanPart := part
-		if idx := strings.IndexByte(part, '['); idx != -1 {
-			cleanPart = part[:idx]
-		}
-
 		found := false
 		for j := 0; j < curr.NumField(); j++ {
 			field := curr.Field(j)
 			name := fieldName(field)
-			if name == cleanPart {
-				// Also strip indices from parts used to build fullPath for pathSet match
-				fullPathParts := make([]string, i+1)
-				for k := 0; k <= i; k++ {
-					p := parts[k]
-					if idx := strings.IndexByte(p, '['); idx != -1 {
-						p = p[:idx]
-					}
-					fullPathParts[k] = p
-				}
-				fullPath := strings.Join(fullPathParts, ".")
+			if name == part {
+				fullPath := strings.Join(parts[:i+1], ".")
 
 				if field.Tag.Get("secret") == "true" || pathSet[fullPath] || (opts.ByConvention && IsConventionSecret(name)) {
 					return true
@@ -82,6 +68,30 @@ func IsSecret(t reflect.Type, path string, opts Options) bool {
 		}
 	}
 	return false
+}
+
+// StripIndices removes all array/slice indices from a path (e.g., "foo[0].bar" -> "foo.bar").
+func StripIndices(path string) string {
+	if !strings.Contains(path, "[") {
+		return path
+	}
+	var b strings.Builder
+	b.Grow(len(path))
+	skip := false
+	for i := 0; i < len(path); i++ {
+		if path[i] == '[' {
+			skip = true
+			continue
+		}
+		if path[i] == ']' {
+			skip = false
+			continue
+		}
+		if !skip {
+			b.WriteByte(path[i])
+		}
+	}
+	return b.String()
 }
 
 var conventionKeywords = []string{"password", "secret", "token", "key", "private"}
