@@ -7,14 +7,14 @@ It provides a complete configuration pipeline: YAML parsing → environment macr
 ## Features
 
 - **YAML parsing** via `gopkg.in/yaml.v3`
-- **Environment macros**: `{ENV:KEY:default}` — exact-match, secure, no shell injection
+- **Macros**: `{ENV:KEY:default}` and `{FILE:/path:default}` — exact-match, secure, no shell injection
 - **Dotenv support**: load `.env` files without mutating `os.Environ()`
 - **Profile-based overrides**: `dev`, `staging`, `prod` merged into base config
 - **Strict decoding**: rejects unknown YAML keys (catches typos)
 - **Typed structs**: decode into `int`, `bool`, `string`, `time.Duration`, nested structs
 - **Normalization hook**: `Normalize()` called after decode
 - **Validation hook**: `Validate()` called after normalization
-- **Secret redaction**: `secret:"true"` tag + dot-path redaction for safe logging
+- **Secret redaction**: `secret:"true"` tag, **redaction-by-convention**, and dot-path redaction
 - **Generator CLI** (`goconfygen`): generate YAML templates, validate, format, and dump configs
 - **Interactive TUI** (`goconfytui`): browse configs, preview, validate, format, and dump interactively
 

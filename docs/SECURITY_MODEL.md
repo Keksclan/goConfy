@@ -4,44 +4,62 @@ This document explains the security design decisions in goConfy and provides rec
 
 ## Exact-Match Macro Expansion
 
-### Why `{ENV:KEY}` Instead of `${VAR}`
+### Why `{ENV:KEY}` and `{FILE:PATH}` Instead of `${VAR}`
 
-goConfy uses a custom macro format: `{ENV:KEY}` or `{ENV:KEY:default}`.
+goConfy uses a custom macro format:
+- Environment: `{ENV:KEY}` or `{ENV:KEY:default}`
+- File: `{FILE:/path/to/file}` or `{FILE:/path/to/file:default}`
 
-The macro is **only expanded when it is the entire YAML scalar value**. The regex enforces this:
+The macro is **only expanded when it is the entire YAML scalar value**. The regexes enforce this:
 
 ```
+# ENV
 ^\{ENV:([A-Z0-9_]+)(?::([^}]*))?\}$
+
+# FILE
+^\{FILE:([^:]+)(?::([^}]*))?\}$
 ```
 
 This is a deliberate security choice:
 
-1. **No partial expansion**: A value like `http://{ENV:HOST}:8080` is **not** expanded. This prevents:
+1. **No partial expansion**: A value like `http://{ENV:HOST}:8080` or `key={FILE:/tmp/key}` is **not** expanded. This prevents:
    - Accidental string interpolation bugs
    - Injection attacks where a macro resolves to a value containing another macro
    - Ambiguity about what is expanded and what isn't
 
 2. **No recursive expansion**: The expanded value is used as-is, never re-scanned for macros.
 
-3. **No shell-style variable references**: `$VAR`, `${VAR}`, and `$(cmd)` are never interpreted. This eliminates an entire class of shell injection vulnerabilities.
+3. **No nesting**: You cannot nest macros (e.g., `{ENV:{FILE:/path}:default}`).
 
-4. **Uppercase-only keys**: The regex only matches `[A-Z0-9_]+`, preventing accidental expansion of lowercase YAML values that happen to look like macros.
+4. **No shell-style variable references**: `$VAR`, `${VAR}`, and `$(cmd)` are never interpreted. This eliminates an entire class of shell injection vulnerabilities.
+
+5. **Uppercase-only ENV keys**: The ENV regex only matches `[A-Z0-9_]+`, preventing accidental expansion of lowercase YAML values that happen to look like macros.
 
 ### What This Means in Practice
 
 ```yaml
 # ✅ Expanded — entire value is a macro
 port: "{ENV:PORT:8080}"
+db_password: "{FILE:/run/secrets/db_password}"
 
 # ❌ NOT expanded — macro is embedded in a string
 url: "http://{ENV:HOST}:8080/path"
+config: "source={FILE:/etc/config}"
 
 # ❌ NOT expanded — shell-style variable
 port: "${PORT}"
 
-# ❌ NOT expanded — lowercase key
+# ❌ NOT expanded — lowercase ENV key
 port: "{ENV:port:8080}"
 ```
+
+## File Macro Security
+
+The `{FILE:PATH}` macro reads the entire content of the specified file, trims leading/trailing whitespace, and uses it as the configuration value.
+
+- **Isolation**: File reading is performed by the process running goConfy. Ensure the process has the minimum necessary filesystem permissions.
+- **Error Handling**: If a file is missing or unreadable, goConfy returns an error unless a default value is provided in the macro.
+- **Redaction**: Values loaded via `{FILE:PATH}` are treated like any other configuration value and will be redacted if the target field is marked as a secret.
 
 ## Dotenv Does Not Mutate OS Environment
 
@@ -90,7 +108,7 @@ When set, only the listed keys are expanded. Any macro referencing an unlisted k
 
 Prefix and allowlist can be used together. A key must satisfy **both** constraints to be expanded.
 
-## Secret Redaction
+### Secret Redaction
 
 ### Struct Tag Redaction
 
@@ -103,6 +121,20 @@ type Config struct {
 ```
 
 When using `goconfy.Redacted()` or `goconfy.DumpRedactedJSON()`, the field value is replaced with `"[REDACTED]"`.
+
+### Redaction by Convention (Opt-in)
+
+You can enable automatic redaction for fields that match common naming conventions (e.g., `password`, `secret`, `token`, `key`, `private`).
+
+```go
+// Globally for the Load pipeline
+goconfy.Load[Config](goconfy.WithRedactByConvention(true))
+
+// Locally for a Redacted() call
+goconfy.Redacted(cfg, goconfy.WithRedactByConventionOption(true))
+```
+
+Matching is case-insensitive and checks if the field name contains any of the keywords.
 
 ### Dot-Path Redaction
 

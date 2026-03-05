@@ -31,6 +31,7 @@ type config struct {
 	profileEnvVar       string
 	profile             string
 	redactionPaths      []string
+	redactByConvention  bool
 	inlineInterpolation bool
 
 	explainReporter explain.Reporter
@@ -43,7 +44,8 @@ type config struct {
 }
 
 type redactConfig struct {
-	paths []string
+	paths        []string
+	byConvention bool
 }
 
 func defaultConfig() *config {
@@ -164,10 +166,25 @@ func WithDotEnvOptional(optional bool) Option {
 	}
 }
 
+// WithRedactByConvention enables automatic redaction based on field names
+// (e.g., password, secret, token, key, private).
+func WithRedactByConvention(enabled bool) Option {
+	return func(c *config) {
+		c.redactByConvention = enabled
+	}
+}
+
 // WithRedactPaths sets dot-separated paths to redact.
 func WithRedactPaths(paths []string) RedactOption {
 	return func(c *redactConfig) {
 		c.paths = paths
+	}
+}
+
+// WithRedactByConventionOption enables automatic redaction based on field names for a specific Redacted call.
+func WithRedactByConventionOption(enabled bool) RedactOption {
+	return func(c *redactConfig) {
+		c.byConvention = enabled
 	}
 }
 

@@ -11,10 +11,15 @@ const redactedValue = "[REDACTED]"
 type Options struct {
 	// Paths is a list of dot-separated paths to redact (e.g., "db.password").
 	Paths []string
+
+	// ByConvention enables automatic redaction based on field names
+	// (e.g., password, secret, token, key, private).
+	ByConvention bool
 }
 
 // IsSecret checks if a given path in a struct type is marked as secret.
-func IsSecret(t reflect.Type, path string) bool {
+// It considers struct tags, explicit paths, and name conventions if enabled.
+func IsSecret(t reflect.Type, path string, opts Options) bool {
 	if t == nil {
 		return false
 	}
@@ -25,6 +30,11 @@ func IsSecret(t reflect.Type, path string) bool {
 		return false
 	}
 
+	pathSet := make(map[string]bool, len(opts.Paths))
+	for _, p := range opts.Paths {
+		pathSet[p] = true
+	}
+
 	parts := strings.Split(path, ".")
 	curr := t
 	for i, part := range parts {
@@ -33,7 +43,8 @@ func IsSecret(t reflect.Type, path string) bool {
 			field := curr.Field(j)
 			name := fieldName(field)
 			if name == part {
-				if field.Tag.Get("secret") == "true" {
+				fullPath := strings.Join(parts[:i+1], ".")
+				if field.Tag.Get("secret") == "true" || pathSet[fullPath] || (opts.ByConvention && IsConventionSecret(name)) {
 					return true
 				}
 				if i == len(parts)-1 {
@@ -57,6 +68,19 @@ func IsSecret(t reflect.Type, path string) bool {
 	return false
 }
 
+var conventionKeywords = []string{"password", "secret", "token", "key", "private"}
+
+// IsConventionSecret returns true if the name matches a common secret convention.
+func IsConventionSecret(name string) bool {
+	name = strings.ToLower(name)
+	for _, kw := range conventionKeywords {
+		if strings.Contains(name, kw) {
+			return true
+		}
+	}
+	return false
+}
+
 // Apply creates a redacted copy of the given value, replacing sensitive fields
 // with "[REDACTED]". It checks both the `secret:"true"` struct tag and
 // explicit dot-path configuration.
@@ -65,5 +89,5 @@ func Apply(v any, opts Options) any {
 	for _, p := range opts.Paths {
 		pathSet[p] = true
 	}
-	return redactValue(v, "", pathSet)
+	return redactValue(v, "", pathSet, opts)
 }

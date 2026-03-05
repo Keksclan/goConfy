@@ -9,14 +9,14 @@ import (
 	"github.com/keksclan/goConfy/explain"
 	"github.com/keksclan/goConfy/internal/decode"
 	"github.com/keksclan/goConfy/internal/dotenv"
-	"github.com/keksclan/goConfy/internal/envmacro"
+	"github.com/keksclan/goConfy/internal/macros"
 	"github.com/keksclan/goConfy/internal/profiles"
 	"github.com/keksclan/goConfy/internal/redact"
 	"github.com/keksclan/goConfy/internal/yamlparse"
 	"gopkg.in/yaml.v3"
 )
 
-func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path string) {
+func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path string, opts redact.Options) {
 	if node == nil || report == nil {
 		return
 	}
@@ -28,7 +28,7 @@ func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path str
 	switch node.Kind {
 	case yaml.DocumentNode:
 		for _, child := range node.Content {
-			collectBaseEntries[T](child, report, path)
+			collectBaseEntries[T](child, report, path, opts)
 		}
 	case yaml.MappingNode:
 		for i := 0; i < len(node.Content)-1; i += 2 {
@@ -40,20 +40,20 @@ func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path str
 			if path != "" {
 				newPath = path + "." + key
 			}
-			collectBaseEntries[T](node.Content[i+1], report, newPath)
+			collectBaseEntries[T](node.Content[i+1], report, newPath, opts)
 		}
 	case yaml.SequenceNode:
 		for i, child := range node.Content {
 			newPath := fmt.Sprintf("%s[%d]", path, i)
-			collectBaseEntries[T](child, report, newPath)
+			collectBaseEntries[T](child, report, newPath, opts)
 		}
 	case yaml.ScalarNode:
-		isSecret := redact.IsSecret(reflect.TypeFor[T](), path)
+		isSecret := redact.IsSecret(reflect.TypeFor[T](), path, opts)
 		report.AddEntry(path, explain.SourceBase, node.Value, isSecret, "")
 	}
 }
 
-func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profileName string) {
+func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profileName string, opts redact.Options) {
 	if root == nil || report == nil || profileName == "" {
 		return
 	}
@@ -88,11 +88,11 @@ func collectProfileEntries[T any](root *yaml.Node, report *explain.Report, profi
 	}
 
 	if overrideNode != nil && overrideNode.Kind == yaml.MappingNode {
-		collectOverrides[T](overrideNode, report, "", profileName)
+		collectOverrides[T](overrideNode, report, "", profileName, opts)
 	}
 }
 
-func collectOverrides[T any](node *yaml.Node, report *explain.Report, path string, profileName string) {
+func collectOverrides[T any](node *yaml.Node, report *explain.Report, path string, profileName string, opts redact.Options) {
 	if node.Kind != yaml.MappingNode {
 		return
 	}
@@ -106,9 +106,9 @@ func collectOverrides[T any](node *yaml.Node, report *explain.Report, path strin
 		}
 
 		if valNode.Kind == yaml.MappingNode {
-			collectOverrides[T](valNode, report, newPath, profileName)
+			collectOverrides[T](valNode, report, newPath, profileName, opts)
 		} else if valNode.Kind == yaml.ScalarNode {
-			isSecret := redact.IsSecret(reflect.TypeFor[T](), newPath)
+			isSecret := redact.IsSecret(reflect.TypeFor[T](), newPath, opts)
 			report.AddEntry(newPath, explain.SourceProfile, valNode.Value, isSecret, fmt.Sprintf("from profile %q", profileName))
 		}
 	}
@@ -136,10 +136,16 @@ func Load[T any](opts ...Option) (T, error) {
 		return zero, &FieldError{Layer: "base", Message: err.Error()}
 	}
 
+	// 2.5 Prepare Explain Report (must be before expansion to capture origins)
 	var report *explain.Report
+	redactOpts := redact.Options{
+		Paths:        cfg.redactionPaths,
+		ByConvention: cfg.redactByConvention,
+	}
+
 	if cfg.explainReporter != nil {
 		report = explain.NewReport()
-		collectBaseEntries[T](node, report, "")
+		collectBaseEntries[T](node, report, "", redactOpts)
 	}
 
 	// 3. Build env lookup chain (base + dotenv)
@@ -149,30 +155,39 @@ func Load[T any](opts ...Option) (T, error) {
 	}
 
 	// 4. Expand env macros
-	expandOpts := envmacro.ExpandOptions{
-		Lookup:      lookup,
-		Prefix:      cfg.envPrefix,
+	expandOpts := macros.ExpandOptions{
+		LookupEnv:   lookup,
+		EnvPrefix:   cfg.envPrefix,
 		AllowedKeys: cfg.allowedEnvKeys,
 	}
 
 	if report != nil {
 		expandOpts.OnExpand = func(path, key, value string, source string) {
-			isSecret := redact.IsSecret(reflect.TypeFor[T](), path)
+			isSecret := redact.IsSecret(reflect.TypeFor[T](), path, redactOpts)
 			lookupKey := key
-			if cfg.envPrefix != "" {
+			if source == "env" && cfg.envPrefix != "" {
 				lookupKey = cfg.envPrefix + key
 			}
 
 			origin := explain.SourceEnv
-			// Check if it came from dotenv or OS
-			// We can use cfg.envLookup and the logic from buildLookupChain
-			// But for now, let's keep it simple or detect based on lookup source
-			// if we want to be more precise.
-			report.AddEntry(path, origin, value, isSecret, fmt.Sprintf("expanded {ENV:%s}", lookupKey))
+			notes := ""
+			switch source {
+			case "env":
+				origin = explain.SourceEnv
+				notes = fmt.Sprintf("expanded {ENV:%s}", lookupKey)
+			case "file":
+				origin = explain.SourceFile
+				notes = fmt.Sprintf("expanded {FILE:%s}", key)
+			case "default":
+				origin = explain.SourceDefault
+				notes = "expanded macro default"
+			}
+
+			report.AddEntry(path, origin, value, isSecret, notes)
 		}
 	}
 
-	if err := envmacro.ExpandNode(node, expandOpts); err != nil {
+	if err := macros.ExpandNode(node, expandOpts); err != nil {
 		var fe *FieldError
 		if errors.As(err, &fe) {
 			fe.Layer = "base"
@@ -199,7 +214,7 @@ func Load[T any](opts ...Option) (T, error) {
 	if cfg.enableProfiles {
 		profileName := profiles.SelectProfile(cfg.profile, cfg.profileEnvVar)
 		if report != nil && profileName != "" {
-			collectProfileEntries[T](node, report, profileName)
+			collectProfileEntries[T](node, report, profileName, redactOpts)
 		}
 		if err := profiles.ApplyProfile(node, profileName); err != nil {
 			return zero, &FieldError{Layer: "profile", Message: err.Error()}

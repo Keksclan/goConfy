@@ -16,6 +16,7 @@ const (
 	SourceProfile Source = "profile"
 	SourceDotenv  Source = "dotenv"
 	SourceEnv     Source = "env"
+	SourceFile    Source = "file"
 	SourceDefault Source = "default"
 )
 
@@ -62,7 +63,12 @@ func (r *Report) AddEntry(path string, source Source, value string, isSecret boo
 				r.Entries[i].OverriddenBy = append(r.Entries[i].OverriddenBy, source)
 			}
 			r.Entries[i].ValueRedacted = redacted
-			// We keep the original source as the first one, but track overrides
+
+			// If current source is more "specific" (not base), we update the primary source
+			if r.Entries[i].Source == SourceBase && source != SourceBase {
+				r.Entries[i].Source = source
+			}
+
 			if notes != "" {
 				if r.Entries[i].Notes != "" {
 					r.Entries[i].Notes += "; " + notes
