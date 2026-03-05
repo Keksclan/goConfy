@@ -59,15 +59,13 @@ func (r *Report) AddEntry(path string, source Source, value string, isSecret boo
 	for i := range r.Entries {
 		if r.Entries[i].Path == path {
 			// Update existing entry
-			if !slices.Contains(r.Entries[i].OverriddenBy, source) {
-				r.Entries[i].OverriddenBy = append(r.Entries[i].OverriddenBy, source)
-			}
-			r.Entries[i].ValueRedacted = redacted
-
-			// If current source is more "specific" (not base), we update the primary source
-			if r.Entries[i].Source == SourceBase && source != SourceBase {
+			if r.Entries[i].Source != source {
+				if !slices.Contains(r.Entries[i].OverriddenBy, r.Entries[i].Source) {
+					r.Entries[i].OverriddenBy = append(r.Entries[i].OverriddenBy, r.Entries[i].Source)
+				}
 				r.Entries[i].Source = source
 			}
+			r.Entries[i].ValueRedacted = redacted
 
 			if notes != "" {
 				if r.Entries[i].Notes != "" {

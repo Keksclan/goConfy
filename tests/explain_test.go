@@ -85,15 +85,18 @@ profiles:
 		if e.ValueRedacted != "dev-host" {
 			t.Errorf("db.host value should be overridden by profile, got: %s", e.ValueRedacted)
 		}
-		foundProfile := false
+		if e.Source != explain.SourceProfile {
+			t.Errorf("db.host source should be profile, got: %s", e.Source)
+		}
+		foundBase := false
 		for _, s := range e.OverriddenBy {
-			if s == explain.SourceProfile {
-				foundProfile = true
+			if s == explain.SourceBase {
+				foundBase = true
 				break
 			}
 		}
-		if !foundProfile {
-			t.Errorf("db.host should show profile override, got: %v", e.OverriddenBy)
+		if !foundBase {
+			t.Errorf("db.host should show base override, got: %v", e.OverriddenBy)
 		}
 	}
 }
