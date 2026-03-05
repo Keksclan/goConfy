@@ -33,7 +33,7 @@ func collectBaseEntries[T any](node *yaml.Node, report *explain.Report, path str
 	case yaml.MappingNode:
 		for i := 0; i < len(node.Content)-1; i += 2 {
 			key := node.Content[i].Value
-			if key == "profiles" {
+			if key == "profiles" && path == "" {
 				continue
 			}
 			newPath := key
