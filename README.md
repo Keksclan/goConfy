@@ -371,7 +371,7 @@ Sample config and .env for exploring the TUI:
 
 ```bash
 (cd tools && go run ./cmd/goconfytui)
-# Then open tools/examples/tui/config.yml and tools/examples/tui/.env
+# Then open examples/tui/config.yml and examples/tui/.env
 # See tools/examples/tui/README.md for a full walkthrough
 ```
 

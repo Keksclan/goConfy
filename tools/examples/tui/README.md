@@ -22,8 +22,8 @@ From the project root:
 1. **Start the TUI** — you will see the Workflow Menu.
 2. **Press `1`** (or arrow down + enter) to select **Open / Inspect config**.
 3. **Enter paths** in the file picker:
-   - Config YAML: `tools/examples/tui/config.yml`
-   - .env file: `tools/examples/tui/.env`
+   - Config YAML: `examples/tui/config.yml`
+   - .env file: `examples/tui/.env`
    - Output path: leave empty
 4. **Press `enter`** to open the Inspect screen.
 5. **Press `tab`** to cycle through preview tabs:
