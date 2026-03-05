@@ -162,7 +162,7 @@ The `goconfygen` CLI can generate YAML templates from your Go struct types.
 ### Build the CLI
 
 ```bash
-go build -o goconfygen ./cmd/goconfygen
+(cd tools && go build -o ../goconfygen ./cmd/goconfygen)
 ```
 
 ### Register Your Config Type
@@ -172,7 +172,7 @@ In your project, create a provider:
 ```go
 package config
 
-import "github.com/keksclan/goConfy/gen/registry"
+import "github.com/keksclan/goConfy/tools/generator/registry"
 
 type Config struct {
     Host string `yaml:"host" default:"localhost" desc:"Server hostname"`
@@ -258,15 +258,15 @@ goconfy.WithProfile("prod")
 
 ## 8. Using the TUI
 
-goConfy ships with an interactive TUI (`goconfytui`) that provides the same
+goConfy provides an interactive TUI (`goconfytui`) in the optional `tools` module that provides the same
 operations as the CLI in a keyboard-driven terminal interface.
 
 ### Install
 
 ```bash
-go install github.com/keksclan/goConfy/cmd/goconfytui@latest
+go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 # or build locally
-go build ./cmd/goconfytui
+(cd tools && go build -o ../goconfytui ./cmd/goconfytui)
 ```
 
 ### Quick Start
@@ -287,7 +287,7 @@ go build ./cmd/goconfytui
 6. From the home menu use `3` to validate, `4` to format, `5` to dump, `6` for settings.
 7. Press `?` at any time for a help overlay.
 
-See [examples/tui/README.md](../examples/tui/README.md) for a full walkthrough with sample files.
+See [tools/examples/tui/README.md](../tools/examples/tui/README.md) for a full walkthrough with sample files.
 
 ## Troubleshooting
 

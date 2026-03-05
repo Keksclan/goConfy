@@ -7,8 +7,8 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test:
-    name: Test and Quality Gates
+  core:
+    name: Core (runtime-only)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -19,6 +19,7 @@ jobs:
         with:
           go-version: '1.26'
           cache: true
+          cache-dependency-path: go.sum
 
       - name: Run gofmt check
         run: |
@@ -42,3 +43,39 @@ jobs:
 
       - name: Run govulncheck
         run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  tools:
+    name: Tools module
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+          cache-dependency-path: tools/go.sum
+
+      - name: Run gofmt check (tools)
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Following files are not formatted:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Run tools tests
+        run: go test -v ./...
+
+      - name: Run tools tests with race detector
+        run: go test -race -v ./...
+
+      - name: Build tool binaries
+        run: |
+          go build ./cmd/goconfygen
+          go build ./cmd/goconfytui

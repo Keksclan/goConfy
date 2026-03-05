@@ -15,14 +15,18 @@ It provides a complete configuration pipeline: YAML parsing → environment macr
 - **Normalization hook**: `Normalize()` called after decode
 - **Validation hook**: `Validate()` called after normalization
 - **Secret redaction**: `secret:"true"` tag, **redaction-by-convention**, and dot-path redaction
-- **Generator CLI** (`goconfygen`): generate YAML templates, validate, format, and dump configs
-- **Interactive TUI** (`goconfytui`): browse configs, preview, validate, format, and dump interactively
+- **Optional tooling module**: `goconfygen` (CLI) and `goconfytui` (TUI) are available separately in `./tools`
 
 ## Installation
 
 ```bash
 go get github.com/keksclan/goConfy@latest
 ```
+
+This installs the **core runtime loader** only.
+
+Optional generator/TUI tooling lives in a separate module at `./tools`.
+See [docs/GENERATOR.md](docs/GENERATOR.md) and [docs/INSTALL_TOOLS.md](docs/INSTALL_TOOLS.md).
 
 ## Versioning & Compatibility
 
@@ -298,81 +302,31 @@ func (c *Config) Validate() error {
 }
 ```
 
-## Generator CLI (goconfygen)
+## Optional Tools (separate module)
 
-`goconfygen` generates YAML config templates, validates configs, formats YAML, and dumps redacted output — all driven by typed Go config structs.
+`goconfygen` (CLI) and `goconfytui` (TUI) are intentionally split from the core runtime.
 
-### Install
+Install directly:
 
 ```bash
-go install github.com/keksclan/goConfy/cmd/goconfygen@latest
-# or build locally:
-go build -o goconfygen ./cmd/goconfygen
+go install github.com/keksclan/goConfy/tools/cmd/goconfygen@latest
+go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 ```
 
-### Registry Approach
+Or build locally from this repository:
 
-Because Go cannot import arbitrary packages at runtime, `goconfygen` uses a registry pattern. Your project registers its config type:
+```bash
+(cd tools && go build -o goconfygen ./cmd/goconfygen)
+(cd tools && go build -o goconfytui ./cmd/goconfytui)
+```
+
+Provider registry import path for generator tooling:
 
 ```go
-package config
-
-import "github.com/keksclan/goConfy/gen/registry"
-
-type configProvider struct{}
-
-func (configProvider) ID() string { return "myservice" }
-func (configProvider) New() any   { return &Config{} }
-
-func init() {
-    registry.Register(configProvider{})
-}
+import "github.com/keksclan/goConfy/tools/generator/registry"
 ```
 
-### Commands
-
-#### `goconfygen init` — Generate YAML template
-
-```bash
-goconfygen init -id myservice -out config.yml
-goconfygen init -id myservice -out config.yml -profile dev,prod -dotenv
-```
-
-#### `goconfygen validate` — Validate config
-
-```bash
-goconfygen validate -id myservice -in config.yml
-goconfygen validate -id myservice -in config.yml -dotenv .env -profile prod -print
-```
-
-#### `goconfygen fmt` — Format YAML
-
-```bash
-goconfygen fmt -in config.yml
-goconfygen fmt -in config.yml -expand -dotenv .env -out resolved.yml
-```
-
-#### `goconfygen dump` — Dump redacted JSON
-
-```bash
-goconfygen dump -id myservice -in config.yml -dotenv .env
-```
-
-### Struct Tags for Generator
-
-| Tag | Purpose | Example |
-|-----|---------|---------|
-| `yaml:"key"` | YAML key name | `yaml:"port"` |
-| `env:"KEY"` | Environment macro | `env:"APP_PORT"` |
-| `default:"val"` | Default value | `default:"8080"` |
-| `desc:"text"` | Description comment | `desc:"HTTP port"` |
-| `example:"val"` | Example comment | `example:"3000"` |
-| `required:"true"` | Required hint | `required:"true"` |
-| `secret:"true"` | Secret (redacted) | `secret:"true"` |
-| `sep:","` | Slice separator | `sep:","` |
-
-See [docs/CONFIG_TAGS.md](docs/CONFIG_TAGS.md) for full reference.
-See [docs/CLI.md](docs/CLI.md) for complete CLI reference.
+See [docs/GENERATOR.md](docs/GENERATOR.md) for tool usage and [docs/CLI.md](docs/CLI.md) for full CLI flags.
 
 ## Examples
 
@@ -392,83 +346,33 @@ Demonstrates `.env` file integration with typed decoding:
 go run ./examples/dotenv
 ```
 
-### examples/generator
+### tools/examples/generator
 
 Demonstrates the registry provider and goconfygen usage:
 
 ```bash
-# See examples/generator/README.md for details
-go build ./cmd/goconfygen
+# See tools/examples/generator/README.md for details
+(cd tools && go build ./cmd/goconfygen)
 ```
 
-### examples/tui
+### tools/examples/tui
 
 Sample config and .env for exploring the TUI:
 
 ```bash
-go run ./cmd/goconfytui
-# Then open examples/tui/config.yml and examples/tui/.env
-# See examples/tui/README.md for a full walkthrough
+(cd tools && go run ./cmd/goconfytui)
+# Then open tools/examples/tui/config.yml and tools/examples/tui/.env
+# See tools/examples/tui/README.md for a full walkthrough
 ```
-
-## goconfytui (TUI)
-
-`goconfytui` is an interactive terminal UI for goConfy, providing the same workflows as the CLI in a keyboard-driven interface powered by [Charm](https://charm.sh/) (bubbletea + lipgloss + bubbles).
-
-### Install / Build
-
-```bash
-# Install globally
-go install github.com/keksclan/goConfy/cmd/goconfytui@latest
-
-# Or build locally
-go build -o goconfytui ./cmd/goconfytui
-```
-
-### Features
-
-- **Inspect config** — browse RAW YAML, EXPANDED, MERGED, and REDACTED JSON tabs
-- **Validate** — run the full pipeline and see VALID / INVALID with error details
-- **Format** — preview before/after and write with confirmation
-- **Dump** — view redacted JSON output
-- **Init** — generate config templates from registry providers
-- **Settings** — toggle strict mode, dotenv options, profile env var, redaction paths
-- **Profile handling** — see active profile, available profiles, and override inline
-- **Directory browser** — navigate and select files with Ctrl+B
-
-### Key Bindings
-
-| Key | Action |
-|-----|--------|
-| `q` / `esc` | Back / quit (from home) |
-| `↑` / `↓` | Navigate |
-| `enter` | Select / confirm |
-| `tab` | Switch tabs / fields |
-| `ctrl+s` | Save / write |
-| `r` | Reload from disk |
-| `v` | Validate |
-| `f` | Format |
-| `d` | Dump |
-| `i` | Init / template |
-| `?` | Toggle help |
-| `ctrl+b` | Open directory browser |
-| `ctrl+c` | Force quit |
-
-### Security
-
-- Secrets are **never** shown in plaintext.
-- YAML previews use best-effort dot-path redaction (configurable in Settings).
-- The REDACTED JSON tab always uses `secret:"true"` struct tags.
-- Default redacted paths: `redis.password`, `auth.opaque.client_secret`, `postgres.url`.
-
-See [examples/tui/README.md](examples/tui/README.md) for a step-by-step walkthrough.
 
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
 | [Getting Started](docs/GETTING_STARTED.md) | Full tutorial from zero to config |
+| [Generator & TUI](docs/GENERATOR.md) | Optional tooling module (`goconfygen`, `goconfytui`) |
 | [CLI Reference](docs/CLI.md) | All goconfygen commands, flags, examples |
+| [Install Tools](docs/INSTALL_TOOLS.md) | Core-only vs tools installation and build commands |
 | [Config Tags](docs/CONFIG_TAGS.md) | All supported struct tags |
 | [Profiles](docs/PROFILES.md) | Profile behavior and merge semantics |
 | [Security Model](docs/SECURITY_MODEL.md) | Security design decisions |
@@ -477,7 +381,7 @@ See [examples/tui/README.md](examples/tui/README.md) for a step-by-step walkthro
 
 - **Go 1.26+** required
 - Core dependency: `gopkg.in/yaml.v3`
-- TUI dependencies: `github.com/charmbracelet/bubbletea`, `lipgloss`, `bubbles`
+- Tool dependencies (only in `tools` module): `bubbletea`, `lipgloss`, `bubbles`
 
 ## License
 

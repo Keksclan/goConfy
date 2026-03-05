@@ -49,15 +49,18 @@ gofmt -w .
 ## Building
 
 ```bash
-# Build all packages
+# Build core packages
 go build ./...
 
-# Build the CLI
-go build -o goconfygen ./cmd/goconfygen
+# Build optional tools module
+(cd tools && go build ./...)
 
-# Build examples
+# Build core examples
 go build ./examples/basic
 go build ./examples/dotenv
+
+# Build tool examples
+(cd tools && go build ./examples/generator)
 ```
 
 ## Code Style
