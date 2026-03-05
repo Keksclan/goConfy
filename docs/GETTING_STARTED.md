@@ -24,7 +24,7 @@ go test ./...
 
 Expected output:
 
-```
+```text
 ok      github.com/keksclan/goConfy/tests    1.5s
 ```
 
@@ -40,7 +40,7 @@ go run ./examples/basic
 
 Expected output (values depend on your environment):
 
-```
+```text
 Host: localhost
 Port: 8080
 Timeout: 30s
@@ -141,7 +141,7 @@ go run main.go
 
 Output:
 
-```
+```text
 Host: localhost
 Port: 3000
 {

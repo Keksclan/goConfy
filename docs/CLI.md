@@ -15,7 +15,7 @@ mkdir -p tools/bin
 
 ## Overview
 
-```
+```text
 goconfygen <command> [flags]
 
 Commands:

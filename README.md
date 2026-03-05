@@ -107,7 +107,7 @@ go run main.go
 
 Output:
 
-```
+```text
 Host: localhost, Port: 8080
 {
   "db": {
@@ -124,7 +124,7 @@ Host: localhost, Port: 8080
 
 goConfy uses exact-match environment and file macros:
 
-```
+```text
 {ENV:KEY}               → look up environment variable KEY, error if missing
 {ENV:KEY:default}       → look up environment variable KEY, use "default" if missing
 {FILE:/path/to/file}    → read entire file content (trimmed)
