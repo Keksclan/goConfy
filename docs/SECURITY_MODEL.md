@@ -8,7 +8,7 @@ This document explains the security design decisions in goConfy and provides rec
 
 goConfy uses a custom macro format:
 - Environment: `{ENV:KEY}` or `{ENV:KEY:default}`
-- File: `{FILE:/path/to/file}` or `{FILE:/path/to/file:default}`
+- File: `{FILE:/path/to/file}` (Unix), `{FILE:C:\path\to\file}` (Windows) or `{FILE:/path:default}`
 
 The macro is **only expanded when it is the entire YAML scalar value**. The regexes enforce this:
 
@@ -41,6 +41,8 @@ This is a deliberate security choice:
 # ✅ Expanded — entire value is a macro
 port: "{ENV:PORT:8080}"
 db_password: "{FILE:/run/secrets/db_password}"
+win_config: "{FILE:C:\config.txt}"
+win_db_pass: "{FILE:C:\secrets\db.pass:password123}"
 
 # ❌ NOT expanded — macro is embedded in a string
 url: "http://{ENV:HOST}:8080/path"
@@ -55,7 +57,7 @@ port: "{ENV:port:8080}"
 
 ## File Macro Security
 
-The `{FILE:PATH}` macro reads the entire content of the specified file, trims leading/trailing whitespace, and uses it as the configuration value.
+The `{FILE:PATH}` macro reads the entire content of the specified file (Unix and Windows paths are supported), trims leading/trailing whitespace, and uses it as the configuration value.
 
 - **Isolation**: File reading is performed by the process running goConfy. Ensure the process has the minimum necessary filesystem permissions.
 - **Error Handling**: If a file is missing or unreadable, goConfy returns an error unless a default value is provided in the macro.
