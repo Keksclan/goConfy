@@ -3,7 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/keksclan/goConfy@v0.1.0-beta.svg)](https://pkg.go.dev/github.com/keksclan/goConfy@v0.1.0-beta)
 [![Go Report Card](https://goreportcard.com/badge/github.com/keksclan/goConfy)](https://goreportcard.com/report/github.com/keksclan/goConfy)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/keksclan/goConfy)](https://github.com/keksclan/goConfy/blob/main/go.mod)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![CI](https://github.com/keksclan/goConfy/actions/workflows/ci.yml/badge.svg)](https://github.com/keksclan/goConfy/actions/workflows/ci.yml)
 
 goConfy is a strongly typed, strict, and secure YAML configuration loader for Go.
@@ -399,6 +399,17 @@ Sample config and .env for exploring the TUI:
 - Core dependency: `gopkg.in/yaml.v3`
 - Tool dependencies (only in `tools` module): `bubbletea`, `lipgloss`, `bubbles`
 
+## Used By
+
+If you use **goConfy** in your project or company infrastructure,
+feel free to add yourself to the list:
+
+→ See [USED_BY.md](USED_BY.md)
+
+Attribution is optional but always appreciated.
+
 ## License
 
-See [LICENSE](LICENSE) file.
+This project is licensed under the MIT License. Attribution is optional but always appreciated.
+
+See the [LICENSE](LICENSE) file for the full text.
