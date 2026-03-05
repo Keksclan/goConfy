@@ -318,8 +318,9 @@ go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 Or build locally from this repository:
 
 ```bash
-(cd tools && go build -o goconfygen ./cmd/goconfygen)
-(cd tools && go build -o goconfytui ./cmd/goconfytui)
+mkdir -p tools/bin
+(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
+(cd tools && go build -o ../tools/bin/goconfytui ./cmd/goconfytui)
 ```
 
 Provider registry import path for generator tooling:
@@ -354,7 +355,8 @@ Demonstrates the registry provider and goconfygen usage:
 
 ```bash
 # See tools/examples/generator/README.md for details
-(cd tools && go build ./cmd/goconfygen)
+mkdir -p tools/bin
+(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
 ```
 
 ### tools/examples/tui

@@ -29,8 +29,9 @@ go install github.com/keksclan/goConfy/tools/cmd/goconfytui@latest
 From the repository root:
 
 ```bash
-(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
-(cd tools && go build -o bin/goconfytui ./cmd/goconfytui)
+mkdir -p tools/bin
+(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
+(cd tools && go build -o ../tools/bin/goconfytui ./cmd/goconfytui)
 ```
 
 ## Run tools without installing

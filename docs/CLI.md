@@ -9,7 +9,8 @@
 go install github.com/keksclan/goConfy/tools/cmd/goconfygen@latest
 
 # Or build locally
-(cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
+mkdir -p tools/bin
+(cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
 ```
 
 ## Overview
@@ -277,7 +278,8 @@ Add to your CI pipeline:
 # GitHub Actions example
 - name: Validate config
   run: |
-    (cd tools && go build -o bin/goconfygen ./cmd/goconfygen)
+    mkdir -p tools/bin
+    (cd tools && go build -o ../tools/bin/goconfygen ./cmd/goconfygen)
     tools/bin/goconfygen validate -id myservice -in config.yml -dotenv .env.example
 ```
 
