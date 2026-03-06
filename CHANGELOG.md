@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-03-06
+
+🎉 **Erster stabiler Release von goConfy!**
+
+Dies ist das erste stabile Release von goConfy. Ab dieser Version garantieren wir Rückwärtskompatibilität innerhalb der Major-Version gemäß [SemVer](https://semver.org/).
+
+### Highlights
+- **Stabile API**: Die öffentliche API ist nun stabil und produktionsreif.
+- **Vollständige Dokumentation**: Umfassende Dokumentation für alle Features.
+- **Offizielles Maskottchen**: goConfy hat jetzt ein Maskottchen! 🎨
+
 ### Added
 - **YAML Benchmarks**: Added `internal/bench/yaml_bench_test.go` to monitor YAML parsing and decoding performance.
 - **Full-Check & Release-Readiness**: Central `make verify` umbrella target for fmt, tests, race detector, and vulncheck.
@@ -12,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - **Enhanced Error Reporting**: `FieldError` now includes `Layer`, `Path`, `Line`, and `Column` information where applicable.
 - **Deterministic Generator**: Golden tests in `tools/tests` ensure deterministic output for `goconfygen`.
 - **Release Checklist**: Added `docs/RELEASE_CHECKLIST.md` for standardized releases.
+- **Mascot**: Offizielles Projekt-Maskottchen hinzugefügt (Dank an [@theanc1entmagusbride](https://www.instagram.com/theanc1entmagusbride) 🎨).
 
 ### Changed
 - **Minimum Go Version**: Lowered minimum Go version from 1.26 to 1.22.
