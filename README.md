@@ -1,5 +1,13 @@
 # goConfy
 
+<p align="center">
+  <img src="masskotchen.webp" alt="goConfy Maskottchen" width="200">
+</p>
+
+<p align="center">
+  <em>Maskottchen gezeichnet von <a href="https://www.instagram.com/theanc1entmagusbride">@theanc1entmagusbride</a> – Vielen Dank! 🎨</em>
+</p>
+
 [![Go Reference](https://pkg.go.dev/badge/github.com/keksclan/goConfy@v0.1.0-beta.svg)](https://pkg.go.dev/github.com/keksclan/goConfy@v0.1.0-beta)
 [![Go Report Card](https://goreportcard.com/badge/github.com/keksclan/goConfy)](https://goreportcard.com/report/github.com/keksclan/goConfy)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/keksclan/goConfy)](https://github.com/keksclan/goConfy/blob/main/go.mod)
